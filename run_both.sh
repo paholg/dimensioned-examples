@@ -1,20 +1,26 @@
 #!/bin/bash
 
-set -ev
-
 echo "Run with $0 N len iter"
 
-./build.sh
+source build.sh
 
 fcpp="mc/cpp-$1-$2-$3"
 frust="mc/rust-$1-$2-$3"
 
-{ time ./target/release/monte-carlo-test $1 $2 $3 $frust; } 2> mc/rusttime
-{ time ./monte-carlo $1 $2 $3 $fcpp; } 2> mc/cpptime
+echo Running with rust
+{ time ./target/release/monte-carlo-test $1 $2 $3 $frust; } 2> mc/time-rust
 
-echo -e "\nFirst 10 lines of output differences:"
-diff $fcpp $frust | head -n10
-echo -e "\nThe C++ Program took:"
-cat mc/cpptime | tail -n3
-echo -e "\nThe Rust Program took:"
-cat mc/rusttime | tail -n3
+for compiler in $compilers; do
+  which $compiler
+  if [[ $? -eq 0 ]]; then
+    echo You DO have $compiler
+    { time ./monte-carlo-$compiler $1 $2 $3 $fcpp-$compiler; } 2> mc/time-$compiler
+    echo -e "\nFirst 10 lines of output differences:" $compiler
+    diff $fcpp-$compiler $frust | head -n10
+  else
+    echo You do not have $compiler
+ fi
+done
+
+
+tail -n3 mc/time*

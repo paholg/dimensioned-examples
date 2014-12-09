@@ -2,4 +2,5 @@
 /Cargo.lock
 *~
 *.o
-monte-carlo
+/monte-carlo*
+mc
