@@ -9,8 +9,8 @@ echo "Run with $0 N len iter"
 fcpp="mc/cpp-$1-$2-$3"
 frust="mc/rust-$1-$2-$3"
 
-time ./target/release/monte-carlo-test $1 $2 $3 $frust 2> mc/rusttime
-time ./monte-carlo $1 $2 $3 $fcpp 2> mc/cpptime
+{ time ./target/release/monte-carlo-test $1 $2 $3 $frust; } 2> mc/rusttime
+{ time ./monte-carlo $1 $2 $3 $fcpp; } 2> mc/cpptime
 
 echo -e "\nFirst 10 lines of output differences:"
 diff $fcpp $frust | head -n10
