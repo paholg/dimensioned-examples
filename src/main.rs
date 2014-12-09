@@ -92,7 +92,7 @@ fn main() {
         // Move each sphere once
         // ---------------------------------------------------------------
         for i in range(0u, n) {
-            let temp = fix_periodic(random_move(&spheres[i], scale, len), len);
+            let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
             for j in range(0u, n) {
                 if j != i && overlap(&spheres[i], &spheres[j], len) {

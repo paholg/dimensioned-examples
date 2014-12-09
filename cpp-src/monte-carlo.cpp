@@ -15,23 +15,36 @@ const double R = 1.0;
 // Functions
 // -----------------------------------------------------------------------------
 
-// States how long it's been since last took call.
-static void took(const char *name);
+#define INLINE_MAYBE static inline
+#define INLINE_MAYBE_NOT
 
-// moves v to inside the cell
-vector3d fix_periodic(vector3d v, const double len);
+INLINE_MAYBE_NOT vector3d fix_periodic(vector3d v, const double len) {
+  for (int i=0; i<3; i++) {
+    if (v[i] > len) v[i] -= len;
+    if (v[i] < 0.0) v[i] += len;
+  }
+  return v;
+}
 
-// Return the vector pointing from a to b, assuming periodic boundaries
-vector3d periodic_diff(const vector3d &a, const vector3d  &b, const double len);
+INLINE_MAYBE_NOT vector3d periodic_diff(const vector3d &a, const vector3d  &b, const double len) {
+  vector3d v = b - a;
+  for (int i=0; i<3; i++) {
+    if (v[i] > len/2.0) v[i] -= len;
+    if (v[i] < -len/2.0) v[i] += len;
+  }
+  return v;
+}
 
-// Check whether two polyhedra overlap
-bool overlap(const vector3d &a, const vector3d &b, const double len);
+INLINE_MAYBE_NOT bool overlap(const vector3d &a, const vector3d &b, const double len) {
+  const double d2 = periodic_diff(a, b, len).normsquared();
+  return d2 < R*R;
+}
 
-// Move the sphere by a random amount, in a gaussian distribution with standard
-// deviation dist
-vector3d random_move(const vector3d &original, double dist, const double len);
-
-
+INLINE_MAYBE_NOT vector3d random_move(const vector3d &original, double size, const double len) {
+  vector3d temp = original;
+  temp = fix_periodic(temp + vector3d::ran(size), len);
+  return temp;
+}
 
 int main(int argc, const char *argv[]) {
   // -----------------------------------------------------------------------------
@@ -92,7 +105,6 @@ int main(int argc, const char *argv[]) {
   }
  done_placing:
   delete[] offset;
-  took("Placement");
 
   // ---------------------------------------------------------------------------
   // Make sure no spheres are overlapping
@@ -122,7 +134,7 @@ int main(int argc, const char *argv[]) {
     // Move each sphere once
     // ---------------------------------------------------------------
     for(int i=0; i<N; i++) {
-      const vector3d temp = fix_periodic(random_move(spheres[i], scale, len), len);
+      const vector3d temp = random_move(spheres[i], scale, len);
       bool overlaps = false;
       for(int j=0; j<N; j++) {
         if (j != i && overlap(spheres[i], spheres[j], len)) {
@@ -186,49 +198,3 @@ int main(int argc, const char *argv[]) {
 // -----------------------------------------------------------------------------
 // END OF MAIN
 // -----------------------------------------------------------------------------
-
-static void took(const char *name) {
-  assert(name); // so it'll count as being used...
-  static clock_t last_time = clock();
-  clock_t t = clock();
-  double seconds = (t-last_time)/double(CLOCKS_PER_SEC);
-  if (seconds > 120) {
-    printf("%s took %.0f minutes and %g seconds.\n", name, seconds/60, fmod(seconds,60));
-  } else {
-    printf("%s took %g seconds..\n", name, seconds);
-  }
-  fflush(stdout);
-  last_time = t;
-}
-
-vector3d fix_periodic(vector3d v, const double len) {
-  for (int i=0; i<3; i++) {
-    while (v[i] > len)
-      v[i] -= len;
-    while (v[i] < 0.0)
-      v[i] += len;
-  }
-  return v;
-}
-
-vector3d periodic_diff(const vector3d &a, const vector3d  &b, const double len) {
-  vector3d v = b - a;
-  for (int i=0; i<3; i++) {
-    while (v[i] > len/2.0)
-      v[i] -= len;
-    while (v[i] < -len/2.0)
-      v[i] += len;
-  }
-  return v;
-}
-
-bool overlap(const vector3d &a, const vector3d &b, const double len) {
-  const double d2 = periodic_diff(a, b, len).normsquared();
-  return d2 < R*R;
-}
-
-vector3d random_move(const vector3d &original, double size, const double len) {
-  vector3d temp = original;
-  temp = fix_periodic(temp + vector3d::ran(size), len);
-  return temp;
-}
