@@ -3,3 +3,6 @@
 name = "monte-carlo-test"
 version = "0.0.1"
 authors = ["Paho Lurie-Gregg <paho@paholg.com>"]
+
+[dependencies]
+time = "*"

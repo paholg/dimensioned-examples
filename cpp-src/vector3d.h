@@ -1,21 +1,29 @@
 #include <math.h>
-#include "MersenneTwister.h"
+//#include "MersenneTwister.h"
 #include <cassert>
 
 #pragma once
 
+#ifdef _MSC_VER
+typedef unsigned __int32 uint32_t
+#else // _MSC_VER
+#include <stdint.h>
+#endif // _MSC_VER
+
 struct random {
-private:
-  static long unsigned int x;
-public:
-  static void seed(unsigned long seedval) {
-    x = seedval;
+  static uint32_t xorshift(void) {
+    static uint32_t x = 123456789;
+    static uint32_t y = 362436069;
+    static uint32_t z = 521288629;
+    static uint32_t w = 88675123;
+    uint32_t t;
+
+    t = x ^ (x << 11);
+    x = y; y = z; z = w;
+    return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
   }
   static double ran() {
-    static MTRand my_mtrand(x);
-    return my_mtrand.randExc();
-    // fixme: make this real
-    return 0.7;
+    return xorshift() * (1.0/4294967295.0);
   }
 };
 

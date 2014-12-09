@@ -37,15 +37,14 @@ int main(int argc, const char *argv[]) {
   // -----------------------------------------------------------------------------
   // Define "Constants" -- set then unchanged
   // -----------------------------------------------------------------------------
-  printf("Call with %s N len iter\n  where N is the number of spheres (must be a cube),\n        len is the length of the cell sides,\n        and iter is the number of iterations to run for.\n", argv[0]);
-  if (argc != 4) { return 1; }
+  // printf("Call with %s N len iter fname\n  where N is the number of spheres (must be a cube),\n        len is the length of the cell sides,\n        iter is the number of iterations to run for,\n       fname is name to save the density file.\n", argv[0]);
+  if (argc != 5) { return 1; }
   const int N = atoi(argv[1]);
   const float len = atof(argv[2]);
   const long iterations = atol(argv[3]);
   const double scale = 0.05;
   const double de_density = 0.01;
-  char *density_fname = new char[1024];
-  sprintf(density_fname, "mc/density-cpp-%i-%f-%li", N, len, iterations);
+  const char *density_fname = argv[4];
 
   // ---------------------------------------------------------------------------
   // Define variables
@@ -54,9 +53,6 @@ int main(int argc, const char *argv[]) {
   long *density_histogram = new long[density_bins]();
   vector3d *spheres = new vector3d[N]();
 
-  // Initialize the random number generator with our seed
-  random::seed(0);
-
   // ---------------------------------------------------------------------------
   // Set up the initial grid
   // ---------------------------------------------------------------------------
@@ -64,7 +60,6 @@ int main(int argc, const char *argv[]) {
   // Note that the unit cells need not be actually "cubic", but the fcc grid will
   //   be stretched to cell dimensions
   const double min_cell_width = 2*sqrt(2)*R; // minimum cell width
-  const int spots_per_cell = 4; // spots in each fcc periodic unit cell
   const int cells = int(len/min_cell_width); // max number of cells per dimension
   const double cell_width = len/cells;
 
@@ -131,14 +126,14 @@ int main(int argc, const char *argv[]) {
       bool overlaps = false;
       for(int j=0; j<N; j++) {
         if (j != i && overlap(spheres[i], spheres[j], len)) {
-            overlaps = true;
-            break;
-          }
+          overlaps = true;
+          break;
+        }
       }
       if (!overlaps) {
-          spheres[i] = temp;
-          workingmoves ++;
-        }
+        spheres[i] = temp;
+        workingmoves ++;
+      }
       totalmoves ++;
     }
     // ---------------------------------------------------------------
@@ -162,7 +157,7 @@ int main(int argc, const char *argv[]) {
       const int minutes = int(secs_done / 60) % 60;
       const int hours = int(secs_done / 3600) % 24;
       const int days = int(secs_done / 86400);
-      printf("Saving data after %i days, %02i:%02i:%02i, %li iterations complete.\n",
+      printf(" (C++) Saving data after %i days, %02i:%02i:%02i, %li iterations complete.\n",
              days, hours, minutes, seconds, iteration);
       fflush(stdout);
 
@@ -185,7 +180,6 @@ int main(int argc, const char *argv[]) {
 
   delete[] spheres;
   delete[] density_histogram;
-  delete[] density_fname;
 
   return 0;
 }
