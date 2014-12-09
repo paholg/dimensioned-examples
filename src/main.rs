@@ -85,7 +85,7 @@ fn main() {
     let start_time = precise_time_s();
     let mut last_output = start_time;
 
-    let mut totalmoves = 0u;
+    //let mut totalmoves = 0u;
     //let mut workingmoves = 0u;
     for iteration in range(1u, iterations+1) {
         // ---------------------------------------------------------------
@@ -104,7 +104,7 @@ fn main() {
                 spheres[i] = temp;
                 //workingmoves += 1;
             }
-            totalmoves += 1;
+            //totalmoves += 1;
         }
         // ---------------------------------------------------------------
         // Add data to density historam
