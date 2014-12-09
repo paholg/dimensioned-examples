@@ -134,10 +134,10 @@ fn main() {
             let zbins: uint = (len/de_density) as uint;
             for z_i in range(0u, zbins) {
                 let z = (z_i as f64 + 0.5)*de_density;
-                let zshell_volume = len*len*de_density;
+                //let zshell_volume = len*len*de_density;
                 let zhist = density_histogram[z_i];
-                let zdensity = ((zhist*n) as f64)/((totalmoves as f64)*zshell_volume);
-                let data = format!("{:6.3}   {:8.5}   {}\n", z, zdensity, zhist);
+                //let zdensity = ((zhist*n) as f64)/((totalmoves as f64)*zshell_volume);
+                let data = format!("{:6.3}   {}\n", z, zhist);
                 match densityout.write(data.as_bytes()) {
                    Ok(()) => (),
                    Err(e) => println!("error writing {}", e)

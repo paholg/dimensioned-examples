@@ -166,10 +166,10 @@ int main(int argc, const char *argv[]) {
       const int zbins = round(len/de_density);
       for(int z_i = 0; z_i < zbins; z_i ++) {
         const double z = (z_i + 0.5)*de_density;
-        const double zshell_volume = len*len*de_density;
+        //const double zshell_volume = len*len*de_density;
         const long zhist = density_histogram[z_i];
-        const double zdensity = (double)zhist*N/totalmoves/zshell_volume;
-        fprintf(densityout, "%6.3f   %8.5f   %li\n", z, zdensity, zhist);
+        //const double zdensity = (double)zhist*N/totalmoves/zshell_volume;
+        fprintf(densityout, "%6.3f   %li\n", z, zhist);
       }
       fclose(densityout);
     }
