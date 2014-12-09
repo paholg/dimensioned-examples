@@ -86,7 +86,7 @@ fn main() {
     let mut last_output = start_time;
 
     let mut totalmoves = 0u;
-    let mut workingmoves = 0u;
+    //let mut workingmoves = 0u;
     for iteration in range(1u, iterations+1) {
         // ---------------------------------------------------------------
         // Move each sphere once
@@ -102,7 +102,7 @@ fn main() {
             }
             if !overlaps {
                 spheres[i] = temp;
-                workingmoves += 1;
+                //workingmoves += 1;
             }
             totalmoves += 1;
         }
@@ -138,7 +138,10 @@ fn main() {
                 let zhist = density_histogram[z_i];
                 let zdensity = ((zhist*n) as f64)/((totalmoves as f64)*zshell_volume);
                 let data = format!("{:6.3}   {:8.5}   {}\n", z, zdensity, zhist);
-                densityout.write(data.as_bytes());
+                match densityout.write(data.as_bytes()) {
+                   Ok(()) => (),
+                   Err(e) => println!("error writing {}", e)
+                }
             }
         }
     }
