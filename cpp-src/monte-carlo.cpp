@@ -18,29 +18,41 @@ const double R = 1.0;
 #define INLINE_MAYBE static inline
 #define INLINE_MAYBE_NOT
 
-INLINE_MAYBE_NOT vector3d fix_periodic(vector3d v, const double len) {
-  for (int i=0; i<3; i++) {
-    if (v[i] > len) v[i] -= len;
-    if (v[i] < 0.0) v[i] += len;
-  }
+INLINE_MAYBE vector3d fix_periodic(vector3d v, const double len) {
+  // for (int i=0; i<3; i++) {
+  //   if (v[i] > len) v[i] -= len;
+  //   if (v[i] < 0.0) v[i] += len;
+  // }
+  if (v.x > len) v.x -= len;
+  if (v.x < 0) v.x += len;
+  if (v.y > len) v.y -= len;
+  if (v.y < 0) v.y += len;
+  if (v.z > len) v.z -= len;
+  if (v.z < 0) v.z += len;
   return v;
 }
 
-INLINE_MAYBE_NOT vector3d periodic_diff(const vector3d &a, const vector3d  &b, const double len) {
+INLINE_MAYBE vector3d periodic_diff(const vector3d &a, const vector3d  &b, const double len) {
   vector3d v = b - a;
-  for (int i=0; i<3; i++) {
-    if (v[i] > len/2.0) v[i] -= len;
-    if (v[i] < -len/2.0) v[i] += len;
-  }
+  // for (int i=0; i<3; i++) {
+  //   if (v[i] > 0.5*len) v[i] -= len;
+  //   if (v[i] < -0.5*len) v[i] += len;
+  // }
+  if (v.x > 0.5*len) v.x -= len;
+  else if (v.x < -0.5*len) v.x += len;
+  if (v.y > 0.5*len) v.y -= len;
+  else if (v.y < -0.5*len) v.y += len;
+  if (v.z > 0.5*len) v.z -= len;
+  else if (v.z < -0.5*len) v.z += len;
   return v;
 }
 
-INLINE_MAYBE_NOT bool overlap(const vector3d &a, const vector3d &b, const double len) {
+INLINE_MAYBE bool overlap(const vector3d &a, const vector3d &b, const double len) {
   const double d2 = periodic_diff(a, b, len).normsquared();
   return d2 < R*R;
 }
 
-INLINE_MAYBE_NOT vector3d random_move(const vector3d &original, double size, const double len) {
+INLINE_MAYBE vector3d random_move(const vector3d &original, double size, const double len) {
   vector3d temp = original;
   temp = fix_periodic(temp + vector3d::ran(size), len);
   return temp;
