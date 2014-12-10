@@ -156,12 +156,12 @@ fn fix_periodic(mut v: Vector3d, len: f64) -> Vector3d {
     //     while v[i] > len { v[i] -= len; }
     //     while v[i] < 0.0 { v[i] += len; }
     // }
-    if v.x > len { v.x -= len; }
-    else if v.x < 0.0 { v.x += len; }
-    if v.y > len { v.y -= len; }
-    else if v.y < 0.0 { v.y += len; }
-    if v.z > len { v.z -= len; }
-    else if v.z < 0.0 { v.z += len; }
+    if v[0] > len { v[0] -= len; }
+    else if v[0] < 0.0 { v[0] += len; }
+    if v[1] > len { v[1] -= len; }
+    else if v[1] < 0.0 { v[1] += len; }
+    if v[2] > len { v[2] -= len; }
+    else if v[2] < 0.0 { v[2] += len; }
     v
 }
 #[inline]
@@ -171,12 +171,12 @@ fn periodic_diff(a: &Vector3d, b: &Vector3d, len: f64) -> Vector3d {
     //     while v[i] > 0.5*len { v[i] -= len; }
     //     while v[i] < -0.5*len { v[i] += len; }
     // }
-    if v.x > 0.5*len { v.x -= len; }
-    else if v.x < -0.5*len { v.x += len; }
-    if v.y > 0.5*len { v.y -= len; }
-    else if v.y < -0.5*len { v.y += len; }
-    if v.z > 0.5*len { v.z -= len; }
-    else if v.z < -0.5*len { v.z += len; }
+    if v[0] > 0.5*len { v[0] -= len; }
+    else if v[0] < -0.5*len { v[0] += len; }
+    if v[1] > 0.5*len { v[1] -= len; }
+    else if v[1] < -0.5*len { v[1] += len; }
+    if v[2] > 0.5*len { v[2] -= len; }
+    else if v[2] < -0.5*len { v[2] += len; }
     v
 }
 #[inline]

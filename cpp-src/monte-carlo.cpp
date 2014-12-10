@@ -23,12 +23,12 @@ INLINE_MAYBE vector3d fix_periodic(vector3d v, const double len) {
   //   if (v[i] > len) v[i] -= len;
   //   if (v[i] < 0.0) v[i] += len;
   // }
-  if (v.x > len) v.x -= len;
-  if (v.x < 0) v.x += len;
-  if (v.y > len) v.y -= len;
-  if (v.y < 0) v.y += len;
-  if (v.z > len) v.z -= len;
-  if (v.z < 0) v.z += len;
+  if (v[0] > len) v[0] -= len;
+  if (v[0] < 0) v[0] += len;
+  if (v[1] > len) v[1] -= len;
+  if (v[1] < 0) v[1] += len;
+  if (v[2] > len) v[2] -= len;
+  if (v[2] < 0) v[2] += len;
   return v;
 }
 
@@ -38,12 +38,12 @@ INLINE_MAYBE vector3d periodic_diff(const vector3d &a, const vector3d  &b, const
   //   if (v[i] > 0.5*len) v[i] -= len;
   //   if (v[i] < -0.5*len) v[i] += len;
   // }
-  if (v.x > 0.5*len) v.x -= len;
-  else if (v.x < -0.5*len) v.x += len;
-  if (v.y > 0.5*len) v.y -= len;
-  else if (v.y < -0.5*len) v.y += len;
-  if (v.z > 0.5*len) v.z -= len;
-  else if (v.z < -0.5*len) v.z += len;
+  if (v[0] > 0.5*len) v[0] -= len;
+  else if (v[0] < -0.5*len) v[0] += len;
+  if (v[1] > 0.5*len) v[1] -= len;
+  else if (v[1] < -0.5*len) v[1] += len;
+  if (v[2] > 0.5*len) v[2] -= len;
+  else if (v[2] < -0.5*len) v[2] += len;
   return v;
 }
 
