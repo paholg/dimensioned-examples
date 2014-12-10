@@ -24,11 +24,11 @@ INLINE_MAYBE vector3d fix_periodic(vector3d v, const double len) {
   //   if (v[i] < 0.0) v[i] += len;
   // }
   if (v[0] > len) v[0] -= len;
-  if (v[0] < 0) v[0] += len;
+  else if (v[0] < 0) v[0] += len;
   if (v[1] > len) v[1] -= len;
-  if (v[1] < 0) v[1] += len;
+  else if (v[1] < 0) v[1] += len;
   if (v[2] > len) v[2] -= len;
-  if (v[2] < 0) v[2] += len;
+  else if (v[2] < 0) v[2] += len;
   return v;
 }
 
