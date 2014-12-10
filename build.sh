@@ -4,16 +4,15 @@
 
 # g++ -o monte-carlo -Wl,-gc-sections cpp-src/monte-carlo.o
 
-compilers="g++ g++-4.9 g++-4.8 g++-4.7 g++-4.4 g++-4.6 clang++"
+compilers="g++ g++-4.8 g++-4.7 g++-4.4 g++-4.6 clang++"
 
 for compiler in $compilers; do
-  which $compiler
-  if [[ $? -eq 0 ]]; then
-    echo You DO have $compiler
-    echo $compiler -o monte-carlo-$compiler -Werror -Wall -O3 cpp-src/monte-carlo.cpp
+  if which $compiler &> /dev/null; then
+    #echo You DO have $compiler
+    echo -e $compiler -o monte-carlo-$compiler -Werror -Wall -O3 cpp-src/monte-carlo.cpp "\n"
     $compiler -o monte-carlo-$compiler -Werror -Wall -O3 cpp-src/monte-carlo.cpp
   else
-    echo You do not have $compiler
+    echo -e You do not have $compiler "\n"
   fi
 done
 

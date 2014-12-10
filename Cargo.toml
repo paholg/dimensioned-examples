@@ -6,3 +6,9 @@ authors = ["Paho Lurie-Gregg <paho@paholg.com>"]
 
 [dependencies]
 time = "*"
+
+[[bin]]
+name = "v1"
+
+[[bin]]
+name = "v2"
