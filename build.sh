@@ -4,7 +4,7 @@
 
 # g++ -o monte-carlo -Wl,-gc-sections cpp-src/monte-carlo.o
 
-compilers="g++-4.9 g++-4.7 g++-4.4 g++-4.6 clang++"
+compilers="g++ g++-4.9 g++-4.8 g++-4.7 g++-4.4 g++-4.6 clang++"
 
 for compiler in $compilers; do
   which $compiler

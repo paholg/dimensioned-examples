@@ -150,28 +150,41 @@ fn main() {
     // ---------------------------------------------------------------------------
 }
 
+#[inline]
 fn fix_periodic(mut v: Vector3d, len: f64) -> Vector3d {
-    for i in range(0u, 3) {
-        while v[i] > len { v[i] -= len; }
-        while v[i] < 0.0 { v[i] += len; }
-    }
+    // for i in range(0u, 3) {
+    //     while v[i] > len { v[i] -= len; }
+    //     while v[i] < 0.0 { v[i] += len; }
+    // }
+    if v.x > len { v.x -= len; }
+    else if v.x < 0.0 { v.x += len; }
+    if v.y > len { v.y -= len; }
+    else if v.y < 0.0 { v.y += len; }
+    if v.z > len { v.z -= len; }
+    else if v.z < 0.0 { v.z += len; }
     v
 }
-
+#[inline]
 fn periodic_diff(a: &Vector3d, b: &Vector3d, len: f64) -> Vector3d {
     let mut v = *b - *a;
-    for i in range(0u, 3) {
-        while v[i] > len/2.0 { v[i] -= len; }
-        while v[i] < -len/2.0 { v[i] += len; }
-    }
+    // for i in range(0u, 3) {
+    //     while v[i] > 0.5*len { v[i] -= len; }
+    //     while v[i] < -0.5*len { v[i] += len; }
+    // }
+    if v.x > 0.5*len { v.x -= len; }
+    else if v.x < -0.5*len { v.x += len; }
+    if v.y > 0.5*len { v.y -= len; }
+    else if v.y < -0.5*len { v.y += len; }
+    if v.z > 0.5*len { v.z -= len; }
+    else if v.z < -0.5*len { v.z += len; }
     v
 }
-
+#[inline]
 fn overlap(a: &Vector3d, b: &Vector3d, len: f64) -> bool {
     let d2 = periodic_diff(a, b, len).norm2();
     d2 < R*R
 }
-
+#[inline]
 fn random_move(v: &Vector3d, scale: f64, len: f64) -> Vector3d {
     fix_periodic(*v + Vector3d::ran(scale), len)
 }
