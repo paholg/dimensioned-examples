@@ -41,17 +41,16 @@ pub struct Vector3d {
 }
 
 
-#[allow(dead_code)]
 impl Vector3d {
     pub fn new(x: f64, y: f64, z: f64) -> Vector3d {
         Vector3d { x: x, y: y, z: z }
     }
 
-    pub fn dot(&self, v: Vector3d) -> f64 {
+    pub fn dot(self, v: Vector3d) -> f64 {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
 
-    pub fn cross(&self, v: Vector3d) -> Vector3d {
+    pub fn cross(self, v: Vector3d) -> Vector3d {
         Vector3d {
             x: self.y * v.z - self.z * v.y,
             y: self.z * v.x - self.x * v.z,
@@ -59,15 +58,15 @@ impl Vector3d {
         }
     }
 
-    pub fn norm2(&self) -> f64 {
+    pub fn norm2(self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    pub fn norm(&self) -> f64 {
+    pub fn norm(self) -> f64 {
         self.norm2().sqrt()
     }
 
-    pub fn normalized(&self) -> Vector3d {
+    pub fn normalized(self) -> Vector3d {
         let n = self.norm();
         Vector3d {
             x: self.x / n,
