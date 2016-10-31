@@ -1,3 +1,4 @@
+```rust
 use std::fmt;
 use std::ops::{Add, Sub, Neg, Mul, Div, Index, IndexMut};
 // use std::num::Float;
@@ -202,3 +203,4 @@ impl fmt::Display for Vector3d {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
+```

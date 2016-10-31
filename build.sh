@@ -4,11 +4,11 @@
 
 # g++ -o monte-carlo -Wl,-gc-sections cpp-src/monte-carlo.o
 
-compilers="g++ g++-4.8 g++-4.7 g++-4.4 g++-4.6 clang++"
+compilers="g++ clang++"
 
 for compiler in $compilers; do
   if which $compiler &> /dev/null; then
-    #echo You DO have $compiler
+    echo You DO have $compiler
     echo -e $compiler -o monte-carlo-$compiler -Werror -Wall -O3 cpp-src/monte-carlo.cpp "\n"
     $compiler -o monte-carlo-$compiler -Werror -Wall -O3 cpp-src/monte-carlo.cpp
   else

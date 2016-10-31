@@ -4,11 +4,21 @@ name = "monte-carlo-test"
 version = "0.0.1"
 authors = ["Paho Lurie-Gregg <paho@paholg.com>"]
 
+build = "build.rs"
+
+
 [dependencies]
 time = "*"
+dimensioned = { path = "../dimensioned/" }
+
+[build-dependencies]
+  tango = "*"
 
 [[bin]]
 name = "v1"
 
 [[bin]]
 name = "v2"
+
+[replace]
+  "typenum:1.4.0" =  { git = "https://github.com/paholg/typenum/", branch = "trait-fns" }

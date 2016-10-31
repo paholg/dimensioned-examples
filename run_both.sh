@@ -16,8 +16,8 @@ echo -e "\n==> Rust v2 <=="
 if diff $frust-2 $frust-1 &> /dev/null; then
     echo "Same output as Rust v1"
 else
-    echo -e "\nDIFFERENT! First 10 lines of output differences for $compiler:"
-    diff $fcpp-$compiler $frust-1
+    echo -e "\nDIFFERENT! First 10 lines of output differences for Rust-2:"
+    diff $frust-2 $frust-1 | head -n10
 fi
 echo ""
 
