@@ -12,7 +12,7 @@ time = "*"
 dimensioned = { path = "../dimensioned/" }
 
 [build-dependencies]
-  tango = "*"
+tango = "*"
 
 [[bin]]
 name = "v1"
