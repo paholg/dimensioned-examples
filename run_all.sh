@@ -9,10 +9,10 @@ frust="mc/rust-$1-$2-$3"
 
 rm mc/time*
 
-echo -e "\n==> Rust v1 <=="
-{ time ./target/release/v1 $1 $2 $3 $frust-1; } 2> mc/time-rust-1
-echo -e "\n==> Rust v2 <=="
-{ time ./target/release/v2 $1 $2 $3 $frust-2; } 2> mc/time-rust-2
+echo -e "\n==> Rust v1: No dimensioned <=="
+{ time ./target/release/rust-no-units $1 $2 $3 $frust-1; } 2> mc/time-rust-1
+echo -e "\n==> Rust v2: Dimensioned and non-generic vectors <=="
+{ time ./target/release/rust-units-outside $1 $2 $3 $frust-2; } 2> mc/time-rust-2
 
 if diff $frust-2 $frust-1 &> /dev/null; then
     echo -e "\nSame output as Rust v1"
@@ -21,8 +21,8 @@ else
     diff $frust-2 $frust-1 | head -n10
 fi
 
-echo -e "\n==> Rust v3 <=="
-{ time ./target/release/v3 $1 $2 $3 $frust-3; } 2> mc/time-rust-3
+echo -e "\n==> Rust v3: Dimensioned with generic vectors <=="
+{ time ./target/release/rust-units-inside $1 $2 $3 $frust-3; } 2> mc/time-rust-3
 
 if diff $frust-3 $frust-1 &> /dev/null; then
     echo -e "\nSame output as Rust v1"

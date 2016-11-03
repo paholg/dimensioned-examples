@@ -8,25 +8,63 @@ use dim::si::{Meter, M, Second, S};
 
 use std::path::Path;
 
-use time::precise_time_s;
 use std::fs::File;
 use std::io::Write;
 
-use vector3dgen::Vector3d;
+use vector3d::Vector3d;
 
-mod vector3dgen;
+mod vector3d;
 
-//@ Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`.
+//@ Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`. In
+//@ this case, we could just do `const R: Meter<f64> = M;` but we may wish to change its
+//@ value.
 
 const R: Meter<f64> = Meter {
     value: 1.0,
     _marker: std::marker::PhantomData,
 };
 
+
+//@ We will need the `norm2()` function from `Vector3d`, so let's make it work on vectors with
+//@ units. First, we'll define a trait for it because we love member functions.
+
+trait Norm2 {
+    type Output;
+    fn norm2(self) -> Self::Output;
+}
+
+//@ Now, we'll implement it using the handy `MapUnsafe` trait from dimensioned. See its declaration
+//@ for more information. The `MapUnsafe` trait is so named because it gives us unlimited power
+//@ over our value and its units, thereby disregarding all the dimensionally safety that this
+//@ library provides. It's a lot like the `unsafe` keyword, only in regards to dimensional safety
+//@ instead of memory safety. Once we've ensured that `norm2` is implemented correctly, we can rest
+//@ easy knowing it will be safe to use.
+//@
+//@ We could implement this a bit more simply if we only cared about it
+//@ working for the `SI` unit system, but it's not that much more trouble to make it general, and
+//@ now it will work with *any* unit system.
+//@
+//@ The `norm2` funtion is a particulary nice case study for this pattern, because it's rather simple
+//@ and yet involes changing both the value type and the units of our object.
+
+use std::ops::Mul;
+use dim::{Dimensioned, MapUnsafe};
+use dim::typenum::{Prod, P2};
+impl<D, U> Norm2 for D where
+    U: Mul<P2>,
+    D: Dimensioned<Value = Vector3d, Units = U> + MapUnsafe<f64, Prod<U, P2>>,
+{
+    type Output = <D as MapUnsafe<f64, Prod<U, P2>>>::Output;
+    fn norm2(self) -> Self::Output {
+        self.map_unsafe(Vector3d::norm2)
+    }
+}
+
+
 //@ We'll define our own wrapper around `precise_time_s` so that it has units.
 
 fn time() -> Second<f64> {
-    precise_time_s() * S
+    time::precise_time_s() * S
 }
 
 //@ We're just doing very basic argument parsing for now.
@@ -69,7 +107,8 @@ fn main() {
     //@ one-dimensional.
 
     let mut density_histogram: Vec<usize> = vec![0; density_bins];
-    let mut spheres: Vec<Vector3d<Meter<f64>>> = Vec::with_capacity(n);
+    let mut spheres: Vec<Meter<Vector3d>> = Vec::with_capacity(n);
+
 
     //@ We will now set up an initial grid of spheres. We will place them on a face-centered cubic (FCC)
     //@ grid. This allows the closest possible packing of spheres, although realistically we won't
@@ -83,11 +122,33 @@ fn main() {
         panic!("Placement cell size too small");
     }
 
-    let offset = [Vector3d::new(0.0*M,  cell_w, cell_w) / 2.0,
-                  Vector3d::new(cell_w, 0.0*M,  cell_w) / 2.0,
-                  Vector3d::new(cell_w, cell_w, 0.0*M) / 2.0,
-                  Vector3d::new(0.0*M,  0.0*M,  0.0*M) / 2.0];
+    //@ Oops, we run into our first problem here. We need to make vectors from `cell_w`, but it
+    //@ has dimensions so we can't do it directly. We have to pull out the value, put that in the vector,
+    //@ and then wrap the whole vector in dimensions. This is essentially
+    //@ dimensioned's version of an unsafe block, and it could be avoided by using a generic
+    //@ vector with the dimensions on the inside.
 
+    let offset = [Meter::new(Vector3d::new(0.0, cell_w.value, cell_w.value) / 2.0),
+                  Meter::new(Vector3d::new(cell_w.value, 0.0, cell_w.value) / 2.0),
+                  Meter::new(Vector3d::new(cell_w.value, cell_w.value, 0.0) / 2.0),
+                  Meter::new(Vector3d::new(0.0, 0.0, 0.0) / 2.0)];
+
+    //@ I would have liked to wrap these vectors in dimensions by simply multiplying by `M`.
+    //@
+    //@ We could multiply with `M` on the right, but then we would have to implement `Mul<SI<f64, A>>
+    //@ for Vector3d`. That's fine in this example, but if `Vector3d` were defined in a different crate, then
+    //@ we'd be out of luck.
+    //@
+    //@ We could multiply with `M` on the left if we were using the `oibit` feature of dimensioned, but
+    //@ that currently requires a nightly version of the compiler, so we won't do that either for
+    //@ this example.
+    //@
+    //@ So, we were forced to call the constructor `Meter::new()`.
+    //@
+    //@ Once our variables are wrapped in dimensions, though, this stops being an issue.
+    //@
+    //@ As we iterate over cells in the lattice, `offset` will give us the adjustments to make to
+    //@ place our spheres.
 
     let mut b: usize = 0;
     'a: for i in 0..cells {
@@ -95,11 +156,15 @@ fn main() {
             for k in 0..cells {
                 for off in offset.iter() {
 
-                    let x = (i as f64) * cell_w;
-                    let y = (j as f64) * cell_w;
-                    let z = (k as f64) * cell_w;
+                    //@ We have to do that same dimensionally unsafe trick here.
 
-                    spheres.push(Vector3d::new(x, y, z) + off.clone());
+                    let x = (i as f64) * cell_w.value;
+                    let y = (j as f64) * cell_w.value;
+                    let z = (k as f64) * cell_w.value;
+
+                    //@ At least we get the benefit of our dimensions for this addition.
+
+                    spheres.push(Meter::new(Vector3d::new(x, y, z)) + off.clone());
 
                     b += 1;
                     if b >= n {
@@ -190,7 +255,7 @@ fn main() {
             //@ quantities. There is also a `map_unsafe()` function that works on quantities with
             //@ units, but its use should be avoided if possible as it circumvents all the unit
             //@ safety that dimensioned provides.
-
+            use dim::Map;
             let seconds = (elapsed / S).map(|x| x as usize) % 60;
             let minutes = (elapsed / minute).map(|x| x as usize) % 60;
             let hours = (elapsed / hour).map(|x| x as usize) % 24;
@@ -218,7 +283,7 @@ fn main() {
     // ---------------------------------------------------------------------------
 }
 
-fn fix_periodic(mut v: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<f64>> {
+fn fix_periodic(mut v: Meter<Vector3d>, len: Meter<f64>) -> Meter<Vector3d> {
     for i in 0..3 {
         if v[i] > len {
             v[i] -= len;
@@ -230,7 +295,7 @@ fn fix_periodic(mut v: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<
     v
 }
 
-fn periodic_diff(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<f64>> {
+fn periodic_diff(a: Meter<Vector3d>, b: Meter<Vector3d>, len: Meter<f64>) -> Meter<Vector3d> {
     let mut v = b - a;
     for i in 0..3 {
         if v[i] > 0.5 * len {
@@ -243,12 +308,11 @@ fn periodic_diff(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f6
     v
 }
 
-use vector3dgen::Norm2;
-fn overlap(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f64>) -> bool {
+fn overlap(a: Meter<Vector3d>, b: Meter<Vector3d>, len: Meter<f64>) -> bool {
     let d2 = periodic_diff(a, b, len).norm2();
     d2 < R * R
 }
 
-fn random_move(v: &Vector3d<Meter<f64>>, scale: f64, len: Meter<f64>) -> Vector3d<Meter<f64>> {
-    fix_periodic(*v + Vector3d::ran(scale)*M, len)
+fn random_move(v: &Meter<Vector3d>, scale: f64, len: Meter<f64>) -> Meter<Vector3d> {
+    fix_periodic(*v + Meter::new(Vector3d::ran(scale)), len)
 }

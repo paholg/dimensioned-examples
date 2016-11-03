@@ -1,6 +1,7 @@
-//@ Introduction goes here
-//@
+Introduction goes here
 
+
+```rust
 extern crate dimensioned as dim;
 extern crate time;
 
@@ -8,51 +9,77 @@ use dim::si::{Meter, M, Second, S};
 
 use std::path::Path;
 
-use time::precise_time_s;
 use std::fs::File;
 use std::io::Write;
 
 use vector3d::Vector3d;
 
 mod vector3d;
+```
 
-//@ Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`.
+Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`. In
+this case, we could just do `const R: Meter<f64> = M;` but we may wish to change its
+value.
 
+```rust
 const R: Meter<f64> = Meter {
     value: 1.0,
     _marker: std::marker::PhantomData,
 };
+```
 
 
-//@ We will need the `norm2()` function from `Vector3d`, so let's make it work on vectors with
-//@ units.
+We will need the `norm2()` function from `Vector3d`, so let's make it work on vectors with
+units. First, we'll define a trait for it because we love member functions.
 
+```rust
 trait Norm2 {
     type Output;
     fn norm2(self) -> Self::Output;
 }
+```
 
-//@ 
+Now, we'll implement it using the handy `MapUnsafe` trait from dimensioned. See its declaration
+for more information. The `MapUnsafe` trait is so named because it gives us unlimited power
+over our value and its units, thereby disregarding all the dimensionally safety that this
+library provides. It's a lot like the `unsafe` keyword, only in regards to dimensional safety
+instead of memory safety. Once we've ensured that `norm2` is implemented correctly, we can rest
+easy knowing it will be safe to use.
 
-use dim::typenum::{Prod, P2};
-use dim::si::SI;
+We could implement this a bit more simply if we only cared about it
+working for the `SI` unit system, but it's not that much more trouble to make it general, and
+now it will work with *any* unit system.
+
+The `norm2` funtion is a particulary nice case study for this pattern, because it's rather simple
+and yet involes changing both the value type and the units of our object.
+
+```rust
 use std::ops::Mul;
-impl<A> Norm2 for SI<Vector3d, A> where A: Mul<P2> {
-    type Output = SI<f64, Prod<A, P2>>;
+use dim::{Dimensioned, MapUnsafe};
+use dim::typenum::{Prod, P2};
+impl<D, U> Norm2 for D where
+    U: Mul<P2>,
+    D: Dimensioned<Value = Vector3d, Units = U> + MapUnsafe<f64, Prod<U, P2>>,
+{
+    type Output = <D as MapUnsafe<f64, Prod<U, P2>>>::Output;
     fn norm2(self) -> Self::Output {
-        SI::new(self.value.norm2())
+        self.map_unsafe(Vector3d::norm2)
     }
 }
+```
 
 
-//@ We'll define our own wrapper around `precise_time_s` so that it has units.
+We'll define our own wrapper around `precise_time_s` so that it has units.
 
+```rust
 fn time() -> Second<f64> {
-    precise_time_s() * S
+    time::precise_time_s() * S
 }
+```
 
-//@ We're just doing very basic argument parsing for now.
+We're just doing very basic argument parsing for now.
 
+```rust
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
 
@@ -64,9 +91,11 @@ fn main() {
         fname is name to save the density file.", argv[0]);
         panic!("Arguments bad!");
     }
+```
 
-    //@ These immutable variable determine the parameters of the simulation.
+These immutable variable determine the parameters of the simulation.
 
+```rust
     let n: usize = argv[1].parse().expect("Need integer for N");
     let len = argv[2].parse::<f64>().expect("Neat float for len") * M;
     let iterations: usize = argv[3].parse().expect("Need integer for iterations");
@@ -74,30 +103,36 @@ fn main() {
     let de_density = 0.01 * M;
     let density_fname = &argv[4];
     let density_path = Path::new(density_fname);
+```
 
-    //@ As the simulation runs, we would like to keep a histogram of where we've seen
-    //@ spheres. This will let us find the density.
-    //@ Periodically, we will check where they all are, and for each sphere, the bin that contains
-    //@ its center will get a count.
-    //@
-    //@ The `Deref` trait is implemented for `SI<V, A> -> V` only for dimensionless quantities, so
-    //@ we can go from `len/de_density` to a primitive in a convenient, yet dimensionally safe,
-    //@ manner.
+As the simulation runs, we would like to keep a histogram of where we've seen
+spheres. This will let us find the density.
+Periodically, we will check where they all are, and for each sphere, the bin that contains
+its center will get a count.
 
+The `Deref` trait is implemented for `SI<V, A> -> V` only for dimensionless quantities, so
+we can go from `len/de_density` to a primitive in a convenient, yet dimensionally safe,
+manner.
+
+```rust
     let density_bins: usize = *(len / de_density + 0.5) as usize;
+```
 
-    //@ We only have walls in the z dimension, which means the density will be constant in the x
-    //@ and y dimensions. We don't care about getting that data, so our histogram can be just
-    //@ one-dimensional.
+We only have walls in the z dimension, which means the density will be constant in the x
+and y dimensions. We don't care about getting that data, so our histogram can be just
+one-dimensional.
 
+```rust
     let mut density_histogram: Vec<usize> = vec![0; density_bins];
     let mut spheres: Vec<Meter<Vector3d>> = Vec::with_capacity(n);
+```
 
 
-    //@ We will now set up an initial grid of spheres. We will place them on a face-centered cubic (FCC)
-    //@ grid. This allows the closest possible packing of spheres, although realistically we won't
-    //@ want to run this simulation with densities that high.
+We will now set up an initial grid of spheres. We will place them on a face-centered cubic (FCC)
+grid. This allows the closest possible packing of spheres, although realistically we won't
+want to run this simulation with densities that high.
 
+```rust
     let min_cell_width = 2.0 * 2.0f64.sqrt() * R;
     let cells = *(len / min_cell_width) as usize;
     let cell_w = len / (cells as f64);
@@ -105,49 +140,57 @@ fn main() {
     if cell_w < min_cell_width {
         panic!("Placement cell size too small");
     }
+```
 
-    //@ Oops, we run into our first problem here. We need to make vectors from `cell_w`, but it
-    //@ has dimensions so we can't do it directly. We have to pull out the value, put that in the vector,
-    //@ and then wrap the whole vector in dimensions. This is essentially
-    //@ dimensioned's version of an unsafe block, and it could be avoided by using a generic
-    //@ vector with the dimensions on the inside.
+Oops, we run into our first problem here. We need to make vectors from `cell_w`, but it
+has dimensions so we can't do it directly. We have to pull out the value, put that in the vector,
+and then wrap the whole vector in dimensions. This is essentially
+dimensioned's version of an unsafe block, and it could be avoided by using a generic
+vector with the dimensions on the inside.
 
+```rust
     let offset = [Meter::new(Vector3d::new(0.0, cell_w.value, cell_w.value) / 2.0),
                   Meter::new(Vector3d::new(cell_w.value, 0.0, cell_w.value) / 2.0),
                   Meter::new(Vector3d::new(cell_w.value, cell_w.value, 0.0) / 2.0),
                   Meter::new(Vector3d::new(0.0, 0.0, 0.0) / 2.0)];
+```
 
-    //@ I would have liked to wrap these vectors in dimensions by simply multiplying by `M`.
-    //@
-    //@ We could multiply with `M` on the right, but then we would have to implement `Mul<SI<f64, A>>
-    //@ for Vector3d`. That's fine in this example, but if `Vector3d` were defined in a different crate, then
-    //@ we'd be out of luck.
-    //@
-    //@ We could multiply with `M` on the left if we were using the `oibit` feature of dimensioned, but
-    //@ that currently requires a nightly version of the compiler, so we won't do that either for
-    //@ this example.
-    //@
-    //@ So, we were forced to call the constructor `Meter::new()`.
-    //@
-    //@ Once our variables are wrapped in dimensions, though, this stops being an issue.
-    //@
-    //@ As we iterate over cells in the lattice, `offset` will give us the adjustments to make to
-    //@ place our spheres.
+I would have liked to wrap these vectors in dimensions by simply multiplying by `M`.
 
+We could multiply with `M` on the right, but then we would have to implement `Mul<SI<f64, A>>
+for Vector3d`. That's fine in this example, but if `Vector3d` were defined in a different crate, then
+we'd be out of luck.
+
+We could multiply with `M` on the left if we were using the `oibit` feature of dimensioned, but
+that currently requires a nightly version of the compiler, so we won't do that either for
+this example.
+
+So, we were forced to call the constructor `Meter::new()`.
+
+Once our variables are wrapped in dimensions, though, this stops being an issue.
+
+As we iterate over cells in the lattice, `offset` will give us the adjustments to make to
+place our spheres.
+
+```rust
     let mut b: usize = 0;
     'a: for i in 0..cells {
         for j in 0..cells {
             for k in 0..cells {
                 for off in offset.iter() {
+```
 
-                    //@ We have to do that same dimensionally unsafe trick here.
+We have to do that same dimensionally unsafe trick here.
 
+```rust
                     let x = (i as f64) * cell_w.value;
                     let y = (j as f64) * cell_w.value;
                     let z = (k as f64) * cell_w.value;
+```
 
-                    //@ At least we get the benefit of our dimensions for this addition.
+At least we get the benefit of our dimensions for this addition.
 
+```rust
                     spheres.push(Meter::new(Vector3d::new(x, y, z)) + off.clone());
 
                     b += 1;
@@ -158,10 +201,12 @@ fn main() {
             }
         }
     }
+```
 
-    //@ Let's verify that we didn't place any spheres overlapping eachother, as they would get
-    //@ stuck like that and mess up the simulation results.
+Let's verify that we didn't place any spheres overlapping eachother, as they would get
+stuck like that and mess up the simulation results.
 
+```rust
     for i in 0..n {
         for j in i+1..n {
             if overlap(spheres[i], spheres[j], len) {
@@ -176,26 +221,36 @@ fn main() {
     let minute = 60.0 * S;
     let hour = 60.0 * minute;
     let day = 24.0 * hour;
+```
 
 
-    //@ We'll output data starting at this interval, and doubling each time
+We'll output data starting at this interval, and doubling each time
 
+```rust
     let mut output_period = 1.0 * S;
+```
 
-    //@ until we reach this interval
+until we reach this interval
 
+```rust
     let max_output_period = 30.0 * minute;
+```
 
-    //@ Let's start the clock!
+Let's start the clock!
+```rust
     let start_time = time();
     let mut last_output = start_time;
+```
 
-    //@ Here's our main program loop
+Here's our main program loop
 
+```rust
     for iteration in 1..iterations + 1 {
+```
 
-        //@ We'll start by moving each sphere once
+We'll start by moving each sphere once
 
+```rust
         for i in 0..n {
             let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
@@ -205,26 +260,32 @@ fn main() {
                     break;
                 }
             }
+```
 
-            //@ We only want to keep the move if it was valid. We can't be moving our spheres into
-            //@ eachother!
+We only want to keep the move if it was valid. We can't be moving our spheres into
+eachother!
 
+```rust
             if !overlaps {
                 spheres[i] = temp;
             }
         }
+```
 
-        //@ Now we update the histogram wherever we have spheres. We could do this more or less
-        //@ frequently, but after moving all the spheres seems like a pretty good time.  Note that we
-        //@ get to use that dereference trick again to go from `Unitless<f64>` to `f64` safely.
+Now we update the histogram wherever we have spheres. We could do this more or less
+frequently, but after moving all the spheres seems like a pretty good time.  Note that we
+get to use that dereference trick again to go from `Unitless<f64>` to `f64` safely.
 
+```rust
         for i in 0..n {
             let z_i: usize = *(spheres[i][2] / de_density) as usize;
             density_histogram[z_i] += 1;
         }
+```
 
-        //@ If enough time has lapsed, we'll save our data to a file.
+If enough time has lapsed, we'll save our data to a file.
 
+```rust
         let now = time();
         if (now - last_output > output_period) || iteration == iterations {
             last_output = now;
@@ -234,12 +295,14 @@ fn main() {
                 max_output_period
             };
             let elapsed = now - start_time;
+```
 
-            //@ Note that, like `Deref`, this `map` function is only defined for unitless
-            //@ quantities. There is also a `map_unsafe()` function that works on quantities with
-            //@ units, but its use should be avoided if possible as it circumvents all the unit
-            //@ safety that dimensioned provides.
-
+Note that, like `Deref`, this `map` function is only defined for unitless
+quantities. There is also a `map_unsafe()` function that works on quantities with
+units, but its use should be avoided if possible as it circumvents all the unit
+safety that dimensioned provides.
+```rust
+            use dim::Map;
             let seconds = (elapsed / S).map(|x| x as usize) % 60;
             let minutes = (elapsed / minute).map(|x| x as usize) % 60;
             let hours = (elapsed / hour).map(|x| x as usize) % 24;
@@ -247,8 +310,10 @@ fn main() {
 
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
                       complete.", days, hours, minutes, seconds, iteration);
+```
 
-            //@ Saving density
+Saving density
+```rust
             let mut densityout = File::create(&density_path).expect("Couldn't make file!");
             let zbins: usize = *(len / de_density) as usize;
             for z_i in 0..zbins {
@@ -300,3 +365,4 @@ fn overlap(a: Meter<Vector3d>, b: Meter<Vector3d>, len: Meter<f64>) -> bool {
 fn random_move(v: &Meter<Vector3d>, scale: f64, len: Meter<f64>) -> Meter<Vector3d> {
     fix_periodic(*v + Meter::new(Vector3d::ran(scale)), len)
 }
+```

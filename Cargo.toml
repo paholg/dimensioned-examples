@@ -16,13 +16,13 @@ build = "build.rs"
   tango = "*"
 
 [[bin]]
-  name = "v1"
+  name = "rust-no-units"
 
 [[bin]]
-  name = "v2"
+  name = "rust-units-outside"
 
 [[bin]]
-  name = "v3"
+  name = "rust-units-inside"
 
 [replace]
   "typenum:1.4.0" =  { git = "https://github.com/paholg/typenum/", branch = "trait-fns" }
