@@ -54,36 +54,19 @@ fn main() {
     if cell_w < min_cell_width {
         panic!("Placement cell size too small");
     }
-    let offset: [Vector3d; 4] = [Vector3d {
-                                     x: 0.0,
-                                     y: cell_w,
-                                     z: cell_w,
-                                 } / 2.0,
-                                 Vector3d {
-                                     x: cell_w,
-                                     y: 0.0,
-                                     z: cell_w,
-                                 } / 2.0,
-                                 Vector3d {
-                                     x: cell_w,
-                                     y: cell_w,
-                                     z: 0.0,
-                                 } / 2.0,
-                                 Vector3d {
-                                     x: 0.0,
-                                     y: 0.0,
-                                     z: 0.0,
-                                 }];
+    let offset: [Vector3d; 4] = [Vector3d::new(0.0,    cell_w, cell_w) / 2.0,
+                                 Vector3d::new(cell_w, 0.0,    cell_w) / 2.0,
+                                 Vector3d::new(cell_w, cell_w, 0.0   ) / 2.0,
+                                 Vector3d::new(0.0,    0.0,    0.0   )];
     let mut b: usize = 0;
     'a: for i in 0..cells {
         for j in 0..cells {
             for k in 0..cells {
                 for off in offset.iter() {
-                    spheres.push(Vector3d {
-                        x: (i as f64) * cell_w,
-                        y: (j as f64) * cell_w,
-                        z: (k as f64) * cell_w,
-                    } + off.clone());
+                    spheres.push(
+                        Vector3d::new((i as f64) * cell_w, (j as f64) * cell_w, (k as f64) * cell_w)
+                            + off.clone()
+                    );
                     b += 1;
                     if b >= n {
                         break 'a;
@@ -92,20 +75,24 @@ fn main() {
             }
         }
     }
+
     // ---------------------------------------------------------------------------
     // Ensure spheres don't overlap
     // ---------------------------------------------------------------------------
+
     for i in 0..n {
-        for j in 0..n {
-            if i != j && overlap(spheres[i], spheres[j], len) {
+        for j in i+1..n {
+            if overlap(spheres[i], spheres[j], len) {
                 panic!("Error in sphere placement!!!");
             }
         }
     }
     println!("Placed spheres!");
+
     // ---------------------------------------------------------------------------
     // MAIN PROGRAM LOOP
     // ---------------------------------------------------------------------------
+
     let mut output_period: f64 = 1.0; // start with 1 s
     let max_output_period: f64 = 60.0 * 30.0; // top out at 30 mins
     let start_time = precise_time_s();
@@ -158,12 +145,7 @@ fn main() {
             let hours = ((elapsed / 3600.0) as usize) % 24;
             let days = (elapsed / 86400.0) as usize;
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
-                      complete.",
-                     days,
-                     hours,
-                     minutes,
-                     seconds,
-                     iteration);
+                      complete.", days, hours, minutes, seconds, iteration);
             // Saving density
             let mut densityout = File::create(&density_path).expect("Couldn't make file!");
             let zbins: usize = (len / de_density) as usize;

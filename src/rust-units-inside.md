@@ -9,7 +9,6 @@ use dim::si::{Meter, M, Second, S};
 
 use std::path::Path;
 
-use time::precise_time_s;
 use std::fs::File;
 use std::io::Write;
 
@@ -22,7 +21,7 @@ Once `const_fns` are stable, this can be replaced with a much nicer call to `Met
 
 ```rust
 const R: Meter<f64> = Meter {
-    value: 1.0,
+    value_unsafe: 1.0,
     _marker: std::marker::PhantomData,
 };
 ```
@@ -30,8 +29,9 @@ const R: Meter<f64> = Meter {
 We'll define our own wrapper around `precise_time_s` so that it has units.
 
 ```rust
+#[inline]
 fn time() -> Second<f64> {
-    precise_time_s() * S
+    time::precise_time_s() * S
 }
 ```
 
@@ -177,6 +177,12 @@ We'll start by moving each sphere once
         for i in 0..n {
             let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
+```
+
+Unlike before, we have to check sphere *i* against all spheres *j*, not just the
+ones with higher indices, because we're moving them as we go.
+
+```rust
             for j in 0..n {
                 if j != i && overlap(spheres[i], spheres[j], len) {
                     overlaps = true;

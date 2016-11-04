@@ -9,23 +9,23 @@ exactly idiomatic.
 
 # Usage
 
-To run all versions of the same simulation, run
+To run all versions of the simulation, run
 
 ```
-./run_both.sh N len iter
+./run_all.sh N len iter
 ```
 
 where `N` is the number of spheres, `len` is the cell dimension, and `iter` is the number of
-iterations to run for.
+iterations to run for. Note that this requires at least Rust version 1.13.0 (the current beta) to
+be your default toolchain.
 
 Running with
 
 ```
-./run_both.sh 30 8 1000000
+./run_all.sh 100 10 1000000
 ```
 
-gives a nice, quick timing comparison and has the same output for both Rust and C++ (with more
-spheres, the outputs vary slightly due to floating point nonsense).
+gives a nice, quick timing comparison.
 
 # About the simulation
 
@@ -43,4 +43,14 @@ axis. This histogram can then be used to calculate the density of spheres in the
 I did research for my undergraduate degree in physics with more involved versions of this
 simulation, so it seemed a good place to start playing with Rust.
 
-# Using dimensioned
+# Quick links
+
+[Non-generic vector](src/vector3d.md)
+
+[Generic vector](src/vector3d_generic.md)
+
+[Rust without units](src/rust-no-units.md)
+
+[Rust with non-generic vectors and units on the outside](src/rust-units-outside.md)
+
+[Rust with generic vectors and units on the inside](src/rust-units-inside.md)

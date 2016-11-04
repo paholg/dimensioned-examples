@@ -1,8 +1,7 @@
-extern crate typenum;
 
 use std::fmt;
 use std::ops::{Add, Sub, Neg, Mul, Div, Index, IndexMut};
-use self::typenum::{Sum, Diff, Prod, Quot, Negate};
+use dim::typenum::{Sum, Diff, Prod, Quot, Negate};
 
 
 static mut RAN: Random = Random {

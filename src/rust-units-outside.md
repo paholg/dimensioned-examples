@@ -1,20 +1,13 @@
-Introduction goes here
-
+We'll start by importing only the things that we'll be using a lot.
 
 ```rust
 extern crate dimensioned as dim;
 extern crate time;
 
-use dim::si::{Meter, M, Second, S};
-
-use std::path::Path;
-
-use std::fs::File;
-use std::io::Write;
-
+mod vector3d;
 use vector3d::Vector3d;
 
-mod vector3d;
+use dim::si::{Meter, M};
 ```
 
 Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`. In
@@ -23,7 +16,7 @@ value.
 
 ```rust
 const R: Meter<f64> = Meter {
-    value: 1.0,
+    value_unsafe: 1.0,
     _marker: std::marker::PhantomData,
 };
 ```
@@ -39,12 +32,11 @@ trait Norm2 {
 }
 ```
 
-Now, we'll implement it using the handy `MapUnsafe` trait from dimensioned. See its declaration
-for more information. The `MapUnsafe` trait is so named because it gives us unlimited power
-over our value and its units, thereby disregarding all the dimensionally safety that this
-library provides. It's a lot like the `unsafe` keyword, only in regards to dimensional safety
-instead of memory safety. Once we've ensured that `norm2` is implemented correctly, we can rest
-easy knowing it will be safe to use.
+Now, we'll implement it using the handy `MapUnsafe` trait from `dimensioned`. It is so named
+because it gives us unlimited power over our value and its units, thereby disregarding all the
+dimensional safety that this library provides. It's a lot like the `unsafe` keyword, only in
+regards to dimensional safety instead of memory safety. Once we've ensured that `norm2` is
+implemented correctly, we can rest easy knowing it will be safe to use.
 
 We could implement this a bit more simply if we only cared about it
 working for the `SI` unit system, but it's not that much more trouble to make it general, and
@@ -68,19 +60,25 @@ impl<D, U> Norm2 for D where
 }
 ```
 
+Other vector operations could be similarly implemented, but they are not needed here, and so
+their implementation is left as an exercise for the reader.
+
 
 We'll define our own wrapper around `precise_time_s` so that it has units.
 
 ```rust
+use dim::si::{Second, S};
 fn time() -> Second<f64> {
     time::precise_time_s() * S
 }
+
+
+fn main() {
 ```
 
 We're just doing very basic argument parsing for now.
 
 ```rust
-fn main() {
     let argv: Vec<String> = std::env::args().collect();
 
     if argv.len() != 5 {
@@ -93,7 +91,7 @@ fn main() {
     }
 ```
 
-These immutable variable determine the parameters of the simulation.
+These immutable variables determine the parameters of the simulation.
 
 ```rust
     let n: usize = argv[1].parse().expect("Need integer for N");
@@ -102,7 +100,7 @@ These immutable variable determine the parameters of the simulation.
     let scale: f64 = 0.05;
     let de_density = 0.01 * M;
     let density_fname = &argv[4];
-    let density_path = Path::new(density_fname);
+    let density_path = std::path::Path::new(density_fname);
 ```
 
 As the simulation runs, we would like to keep a histogram of where we've seen
@@ -149,9 +147,9 @@ dimensioned's version of an unsafe block, and it could be avoided by using a gen
 vector with the dimensions on the inside.
 
 ```rust
-    let offset = [Meter::new(Vector3d::new(0.0, cell_w.value, cell_w.value) / 2.0),
-                  Meter::new(Vector3d::new(cell_w.value, 0.0, cell_w.value) / 2.0),
-                  Meter::new(Vector3d::new(cell_w.value, cell_w.value, 0.0) / 2.0),
+    let offset = [Meter::new(Vector3d::new(0.0, cell_w.value_unsafe, cell_w.value_unsafe) / 2.0),
+                  Meter::new(Vector3d::new(cell_w.value_unsafe, 0.0, cell_w.value_unsafe) / 2.0),
+                  Meter::new(Vector3d::new(cell_w.value_unsafe, cell_w.value_unsafe, 0.0) / 2.0),
                   Meter::new(Vector3d::new(0.0, 0.0, 0.0) / 2.0)];
 ```
 
@@ -183,9 +181,9 @@ place our spheres.
 We have to do that same dimensionally unsafe trick here.
 
 ```rust
-                    let x = (i as f64) * cell_w.value;
-                    let y = (j as f64) * cell_w.value;
-                    let z = (k as f64) * cell_w.value;
+                    let x = (i as f64) * cell_w.value_unsafe;
+                    let y = (j as f64) * cell_w.value_unsafe;
+                    let z = (k as f64) * cell_w.value_unsafe;
 ```
 
 At least we get the benefit of our dimensions for this addition.
@@ -254,6 +252,12 @@ We'll start by moving each sphere once
         for i in 0..n {
             let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
+```
+
+Unlike before, we have to check sphere *i* against all spheres *j*, not just the
+ones with higher indices, because we're moving them as we go.
+
+```rust
             for j in 0..n {
                 if j != i && overlap(spheres[i], spheres[j], len) {
                     overlaps = true;
@@ -301,6 +305,7 @@ Note that, like `Deref`, this `map` function is only defined for unitless
 quantities. There is also a `map_unsafe()` function that works on quantities with
 units, but its use should be avoided if possible as it circumvents all the unit
 safety that dimensioned provides.
+
 ```rust
             use dim::Map;
             let seconds = (elapsed / S).map(|x| x as usize) % 60;
@@ -313,13 +318,15 @@ safety that dimensioned provides.
 ```
 
 Saving density
+
 ```rust
-            let mut densityout = File::create(&density_path).expect("Couldn't make file!");
+            let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
             let zbins: usize = *(len / de_density) as usize;
             for z_i in 0..zbins {
                 let z = (z_i as f64 + 0.5) * de_density;
                 let zhist = density_histogram[z_i];
                 let data = format!("{:6.3}   {}\n", z / R, zhist);
+                use std::io::Write;
                 match densityout.write(data.as_bytes()) {
                     Ok(_) => (),
                     Err(e) => println!("error writing {}", e),

@@ -8,7 +8,6 @@ use dim::si::{Meter, M, Second, S};
 
 use std::path::Path;
 
-use time::precise_time_s;
 use std::fs::File;
 use std::io::Write;
 
@@ -19,14 +18,15 @@ mod vector3d_generic;
 //@ Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`.
 
 const R: Meter<f64> = Meter {
-    value: 1.0,
+    value_unsafe: 1.0,
     _marker: std::marker::PhantomData,
 };
 
 //@ We'll define our own wrapper around `precise_time_s` so that it has units.
 
+#[inline]
 fn time() -> Second<f64> {
-    precise_time_s() * S
+    time::precise_time_s() * S
 }
 
 //@ We're just doing very basic argument parsing for now.
@@ -150,6 +150,10 @@ fn main() {
         for i in 0..n {
             let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
+
+            //@ Unlike before, we have to check sphere *i* against all spheres *j*, not just the
+            //@ ones with higher indices, because we're moving them as we go.
+
             for j in 0..n {
                 if j != i && overlap(spheres[i], spheres[j], len) {
                     overlaps = true;

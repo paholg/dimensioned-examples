@@ -9,8 +9,7 @@ build = "build.rs"
 
 [dependencies]
   time = "*"
-  dimensioned = { path = "../dimensioned/" }
-  typenum = "1.4.0"
+  dimensioned = { git = "https://github.com/paholg/dimensioned", branch="rmdim" }
 
 [build-dependencies]
   tango = "*"
@@ -23,6 +22,3 @@ build = "build.rs"
 
 [[bin]]
   name = "rust-units-inside"
-
-[replace]
-  "typenum:1.4.0" =  { git = "https://github.com/paholg/typenum/", branch = "trait-fns" }
