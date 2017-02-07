@@ -7,12 +7,11 @@ extern crate time;
 mod vector3d;
 use vector3d::Vector3d;
 
-use dim::si::{Meter, M};
+use dim::si::{self, Meter, M};
 ```
 
-Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`. In
-this case, we could just do `const R: Meter<f64> = M;` but we may wish to change its
-value.
+Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`. In this
+case, we could just do `const R: Meter<f64> = M;` but we may wish to change its value.
 
 ```rust
 const R: Meter<f64> = Meter {
@@ -34,13 +33,13 @@ trait Norm2 {
 
 Now, we'll implement it using the handy `MapUnsafe` trait from `dimensioned`. It is so named
 because it gives us unlimited power over our value and its units, thereby disregarding all the
-dimensional safety that this library provides. It's a lot like the `unsafe` keyword, only in
-regards to dimensional safety instead of memory safety. Once we've ensured that `norm2` is
-implemented correctly, we can rest easy knowing it will be safe to use.
+dimensional safety that this library provides. It's a lot like the `unsafe` keyword, only for
+dimensional safety instead of memory safety. Once we've ensured that `norm2` is implemented
+correctly, we can rest easy knowing it will be safe to use.
 
-We could implement this a bit more simply if we only cared about it
-working for the `SI` unit system, but it's not that much more trouble to make it general, and
-now it will work with *any* unit system.
+We could implement this a bit more simply if we only cared about it working for the `SI` unit
+system, but it's not that much more trouble to make it general, and now it will work with *any*
+unit system.
 
 The `norm2` funtion is a particulary nice case study for this pattern, because it's rather simple
 and yet involes changing both the value type and the units of our object.
@@ -60,25 +59,27 @@ impl<D, U> Norm2 for D where
 }
 ```
 
-Other vector operations could be similarly implemented, but they are not needed here, and so
-their implementation is left as an exercise for the reader.
+Notice that `MapUnsafe` is parametrized by the output types of your value and units, like so:
+`MapUnsafe<ValueOut, UnitsOut>`. The new units are defined just by the associated type, `Output`
+(in this case, by the expression `Prod<U, P2>` which means the new units are whatever the old ones
+were, only doubled), whereas the new value type (`f64` here) needs to be specified there and
+altered in the function body (the call to `norm2` here).
+
+
+Other vector operations could be similarly implemented, but they are not needed here, and so their
+implementation is left as an exercise for the reader.
 
 
 We'll define our own wrapper around `precise_time_s` so that it has units.
 
 ```rust
-use dim::si::{Second, S};
-fn time() -> Second<f64> {
-    time::precise_time_s() * S
+fn time() -> si::Second<f64> {
+    time::precise_time_s() * si::S
 }
 
 
 fn main() {
-```
 
-We're just doing very basic argument parsing for now.
-
-```rust
     let argv: Vec<String> = std::env::args().collect();
 
     if argv.len() != 5 {
@@ -89,48 +90,27 @@ We're just doing very basic argument parsing for now.
         fname is name to save the density file.", argv[0]);
         panic!("Arguments bad!");
     }
-```
 
-These immutable variables determine the parameters of the simulation.
-
-```rust
     let n: usize = argv[1].parse().expect("Need integer for N");
     let len = argv[2].parse::<f64>().expect("Neat float for len") * M;
     let iterations: usize = argv[3].parse().expect("Need integer for iterations");
     let scale: f64 = 0.05;
+
     let de_density = 0.01 * M;
     let density_fname = &argv[4];
     let density_path = std::path::Path::new(density_fname);
 ```
 
-As the simulation runs, we would like to keep a histogram of where we've seen
-spheres. This will let us find the density.
-Periodically, we will check where they all are, and for each sphere, the bin that contains
-its center will get a count.
-
 The `Deref` trait is implemented for `SI<V, A> -> V` only for dimensionless quantities, so
-we can go from `len/de_density` to a primitive in a convenient, yet dimensionally safe,
-manner.
+we can go from `len/de_density` (which both have units of `Meter`) to a primitive in a
+convenient, yet dimensionally safe, manner.
 
 ```rust
     let density_bins: usize = *(len / de_density + 0.5) as usize;
-```
 
-We only have walls in the z dimension, which means the density will be constant in the x
-and y dimensions. We don't care about getting that data, so our histogram can be just
-one-dimensional.
-
-```rust
     let mut density_histogram: Vec<usize> = vec![0; density_bins];
     let mut spheres: Vec<Meter<Vector3d>> = Vec::with_capacity(n);
-```
 
-
-We will now set up an initial grid of spheres. We will place them on a face-centered cubic (FCC)
-grid. This allows the closest possible packing of spheres, although realistically we won't
-want to run this simulation with densities that high.
-
-```rust
     let min_cell_width = 2.0 * 2.0f64.sqrt() * R;
     let cells = *(len / min_cell_width) as usize;
     let cell_w = len / (cells as f64);
@@ -199,12 +179,7 @@ At least we get the benefit of our dimensions for this addition.
             }
         }
     }
-```
 
-Let's verify that we didn't place any spheres overlapping eachother, as they would get
-stuck like that and mess up the simulation results.
-
-```rust
     for i in 0..n {
         for j in i+1..n {
             if overlap(spheres[i], spheres[j], len) {
@@ -212,52 +187,23 @@ stuck like that and mess up the simulation results.
             }
         }
     }
-
     println!("Placed spheres!");
-
-    // fimxe: these should be consts in si
-    let minute = 60.0 * S;
-    let hour = 60.0 * minute;
-    let day = 24.0 * hour;
 ```
 
-
-We'll output data starting at this interval, and doubling each time
-
-```rust
-    let mut output_period = 1.0 * S;
-```
-
-until we reach this interval
+No comments needed to note that these times are 1 s and 30 min respectively!
 
 ```rust
-    let max_output_period = 30.0 * minute;
-```
+    let mut output_period = 1.0 * si::S;
+    let max_output_period = 30.0 * si::MIN;
 
-Let's start the clock!
-```rust
     let start_time = time();
     let mut last_output = start_time;
-```
 
-Here's our main program loop
-
-```rust
     for iteration in 1..iterations + 1 {
-```
-
-We'll start by moving each sphere once
-
-```rust
         for i in 0..n {
             let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
-```
 
-Unlike before, we have to check sphere *i* against all spheres *j*, not just the
-ones with higher indices, because we're moving them as we go.
-
-```rust
             for j in 0..n {
                 if j != i && overlap(spheres[i], spheres[j], len) {
                     overlaps = true;
@@ -274,22 +220,19 @@ eachother!
                 spheres[i] = temp;
             }
         }
+
+        for sphere in &spheres {
 ```
 
-Now we update the histogram wherever we have spheres. We could do this more or less
-frequently, but after moving all the spheres seems like a pretty good time.  Note that we
-get to use that dereference trick again to go from `Unitless<f64>` to `f64` safely.
+We get to use that dereference trick again to go from `Unitless<f64>` to
+`f64` safely.
+fixme: Note we're doing sphere[2] not sphere.z
 
 ```rust
-        for i in 0..n {
-            let z_i: usize = *(spheres[i][2] / de_density) as usize;
+            let z_i: usize = *(sphere[2] / de_density) as usize;
             density_histogram[z_i] += 1;
         }
-```
 
-If enough time has lapsed, we'll save our data to a file.
-
-```rust
         let now = time();
         if (now - last_output > output_period) || iteration == iterations {
             last_output = now;
@@ -301,17 +244,17 @@ If enough time has lapsed, we'll save our data to a file.
             let elapsed = now - start_time;
 ```
 
-Note that, like `Deref`, this `map` function is only defined for unitless
+Note that, like `Deref`, this `map` function is only defined for `Unitless`
 quantities. There is also a `map_unsafe()` function that works on quantities with
 units, but its use should be avoided if possible as it circumvents all the unit
 safety that dimensioned provides.
 
 ```rust
             use dim::Map;
-            let seconds = (elapsed / S).map(|x| x as usize) % 60;
-            let minutes = (elapsed / minute).map(|x| x as usize) % 60;
-            let hours = (elapsed / hour).map(|x| x as usize) % 24;
-            let days = (elapsed / day).map(|x| x as usize);
+            let seconds = (elapsed / si::S).map(|x| x as usize) % 60;
+            let minutes = (elapsed / si::MIN).map(|x| x as usize) % 60;
+            let hours = (elapsed / si::HR).map(|x| x as usize) % 24;
+            let days = (elapsed / si::DAY).map(|x| x as usize);
 
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
                       complete.", days, hours, minutes, seconds, iteration);
@@ -321,7 +264,13 @@ Saving density
 
 ```rust
             let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
+```
+
+Handy `Deref` yet again.
+
+```rust
             let zbins: usize = *(len / de_density) as usize;
+
             for z_i in 0..zbins {
                 let z = (z_i as f64 + 0.5) * de_density;
                 let zhist = density_histogram[z_i];

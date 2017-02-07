@@ -1,9 +1,6 @@
+This is a very basic, no-frills 3d vector library. It provides only vectors over `f64`.
+
 ```rust
-use std::fmt;
-use std::ops::{Add, Sub, Neg, Mul, Div, Index, IndexMut};
-// use std::num::Float;
-
-
 static mut RAN: Random = Random {
     ran_x: 123456789,
     ran_y: 362436069,
@@ -40,7 +37,6 @@ pub struct Vector3d {
     pub y: f64,
     pub z: f64,
 }
-
 
 impl Vector3d {
     pub fn new(x: f64, y: f64, z: f64) -> Vector3d {
@@ -107,7 +103,12 @@ impl Vector3d {
         }
     }
 }
+```
 
+We'll want to be able to do arithmetic with our vectors, so let's define the basic operators.
+
+```rust
+use std::ops::Add;
 impl Add<Vector3d> for Vector3d {
     type Output = Vector3d;
     fn add(self, v: Vector3d) -> Vector3d {
@@ -118,7 +119,12 @@ impl Add<Vector3d> for Vector3d {
         }
     }
 }
+```
 
+
+
+```rust
+use std::ops::Sub;
 impl Sub<Vector3d> for Vector3d {
     type Output = Vector3d;
     fn sub(self, v: Vector3d) -> Vector3d {
@@ -129,7 +135,12 @@ impl Sub<Vector3d> for Vector3d {
         }
     }
 }
+```
 
+
+
+```rust
+use std::ops::Neg;
 impl Neg for Vector3d {
     type Output = Vector3d;
     fn neg(self) -> Vector3d {
@@ -140,7 +151,12 @@ impl Neg for Vector3d {
         }
     }
 }
+```
 
+
+
+```rust
+use std::ops::Mul;
 impl Mul<f64> for Vector3d {
     type Output = Vector3d;
     fn mul(self, s: f64) -> Vector3d {
@@ -151,7 +167,11 @@ impl Mul<f64> for Vector3d {
         }
     }
 }
+```
 
+
+
+```rust
 impl Mul<Vector3d> for f64 {
     type Output = Vector3d;
     fn mul(self, v: Vector3d) -> Vector3d {
@@ -162,7 +182,12 @@ impl Mul<Vector3d> for f64 {
         }
     }
 }
+```
 
+We'll want to be able to divide vectors by scalars.
+
+```rust
+use std::ops::Div;
 impl Div<f64> for Vector3d {
     type Output = Vector3d;
     fn div(self, s: f64) -> Vector3d {
@@ -173,7 +198,12 @@ impl Div<f64> for Vector3d {
         }
     }
 }
+```
 
+It may be nice to index our vectors, so let's implement it.
+
+```rust
+use std::ops::Index;
 impl Index<usize> for Vector3d {
     type Output = f64;
     fn index<'a>(&'a self, index: usize) -> &'a f64 {
@@ -186,6 +216,7 @@ impl Index<usize> for Vector3d {
     }
 }
 
+use std::ops::IndexMut;
 impl IndexMut<usize> for Vector3d {
     fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut f64 {
         match index {
@@ -196,7 +227,12 @@ impl IndexMut<usize> for Vector3d {
         }
     }
 }
+```
 
+For debugging, it may be useful to display our vectors as an ordered triple, so let's implement it.
+
+```rust
+use std::fmt;
 impl fmt::Display for Vector3d {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)

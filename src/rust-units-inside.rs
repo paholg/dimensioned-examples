@@ -4,7 +4,7 @@
 extern crate dimensioned as dim;
 extern crate time;
 
-use dim::si::{Meter, M, Second, S};
+use dim::si::{self, Meter, M, Second, S, MIN, HR, DAY};
 
 use std::path::Path;
 
@@ -123,11 +123,6 @@ fn main() {
 
     println!("Placed spheres!");
 
-    // fimxe: these should be consts in si
-    let minute = 60.0 * S;
-    let hour = 60.0 * minute;
-    let day = 24.0 * hour;
-
 
     //@ We'll output data starting at this interval, and doubling each time
 
@@ -135,7 +130,7 @@ fn main() {
 
     //@ until we reach this interval
 
-    let max_output_period = 30.0 * minute;
+    let max_output_period = 30.0 * si::MIN;
 
     //@ Let's start the clock!
     let start_time = time();
@@ -197,9 +192,9 @@ fn main() {
 
             use dim::Map;
             let seconds = (elapsed / S).map(|x| x as usize) % 60;
-            let minutes = (elapsed / minute).map(|x| x as usize) % 60;
-            let hours = (elapsed / hour).map(|x| x as usize) % 24;
-            let days = (elapsed / day).map(|x| x as usize);
+            let minutes = (elapsed / MIN).map(|x| x as usize) % 60;
+            let hours = (elapsed / HR).map(|x| x as usize) % 24;
+            let days = (elapsed / DAY).map(|x| x as usize);
 
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
                       complete.", days, hours, minutes, seconds, iteration);
