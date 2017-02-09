@@ -1,11 +1,8 @@
-# Monte Carlo Test
+# Monte Carlo Simulation of a Homogeneous Hard Sphere Fluid
 
-This repository contains multiple versions of the same Monte Carlo simulation. It began as a timing
-test between C++ code and equivalent Rust code. Now it serves primarily as an example of using
+This repository contains four versions of the same simulation; a C++ version, a Rust version with
+no units, and two Rust versions with units that demonstrate different ways to use
 [`dimensioned`](https://github.com/paholg/dimensioned/).
-
-As a result of starting as essentially a Rust clone of C++ code, much of the Rust code isn't
-exactly idiomatic.
 
 # Usage
 
@@ -16,8 +13,7 @@ To run all versions of the simulation, run
 ```
 
 where `N` is the number of spheres, `len` is the cell dimension, and `iter` is the number of
-iterations to run for. Note that this requires at least Rust version 1.13.0 (the current beta) to
-be your default toolchain.
+iterations for which to run.
 
 Running with
 
@@ -29,28 +25,80 @@ gives a nice, quick timing comparison.
 
 # About the simulation
 
-This simulation creates a cubic cell and then places some spheres inside it. The cell has walls on
-the *z*-axis, and periodic boundary conditions on the *x* and *y* axes. That means that if a sphere
-moves outside the cell in the *x* direction, it pops in on the other side, much like Pacman.
+A hard sphere fluid is a fluid made of spherical particles that have only one interaction; they
+can't be in the same place at the same time. Imagine a box in space with a bunch of billiard balls
+bouncing around in it -- that's essentially what it is. That is also one way to simulate it, called
+molecular dynamics. The simulation method invoked here, Monte Carlo, does not do that. We'll get to
+that in a minute.
 
-Then, each iteration, a random move is attempted for each of the spheres. If it is moved into
-another sphere or into a wall, then that move is rejected, and the sphere stays where it was.
+We are simulating a homogeneous fluid. That means that it's the same everywhere---there are no
+interfaces, or particles that are different from eachother, or really anything interesting at
+all. Basically, instead of a box of billiard balls in space, all of space is filled with billiard
+balls and only billiard balls. We simulate this by having a finite box with periodic boundary
+conditions. If a sphere moves out of the box, then it moves back in on the other side, much like a
+Pacman level. This way, we are simulating all of space being filled with repeating copies of our
+box. As long as our box isn't too small, this will give the same results as having a box of
+infinite size.
 
-As the simulation runs, a histogram stores counts of where spheres are seen. Since the *x* and *y*
-axes are incredibly boring, the histogram only stores where spheres are seen along the *z*
-axis. This histogram can then be used to calculate the density of spheres in the cell.
+In a Monte Carlo simulation, we make a random move of each sphere. If a move is valid, we keep
+it. If not, we reject the move, returning the system to its state before the move. A move is valid
+if it does not cause any of the spheres to overlap. Once we've attempted moving each sphere, we
+repeat, ad infinitum.
+
+As the simulation runs, a histogram stores counts of where spheres are seen. This allows us to
+calculate the density of spheres across space. It will be the same everywhere, and could be
+calculated just from the simulation inputs, but this gives us an output to ensure the different
+versions are all getting the exact same results.
 
 I did research for my undergraduate degree in physics with more involved versions of this
 simulation, so it seemed a good place to start playing with Rust.
 
-# Quick links
+# About this repository
 
-[Non-generic vector](src/vector3d.md)
+The C++ version of this simulation is located in `cpp-src`. It is not the focus of this
+documentation and will not be mentioned again.
 
-[Generic vector](src/vector3d_generic.md)
+The Rust code was written in literate Rust, with the help of
+[tango](https://github.com/pnkfelix/tango). As you read through this document, there will be a
+brief overview of each file, and then a link to it.
 
-[Rust without units](src/rust-no-units.md)
+# The Three Rust Versions
 
-[Rust with non-generic vectors and units on the outside](src/rust-units-outside.md)
+## 1. No Units
 
-[Rust with generic vectors and units on the inside](src/rust-units-inside.md)
+Let's start with the basic simulation. For simplicity, we use a very basic, non-generic 3d vector
+library, which you can read about [here](src/vector3d.md).
+
+The only thing of note is the random number generation, which was done that way only because we
+wanted identical results for the Rust and C++ code, so they both use the same, basic random number
+generator.
+
+Consider this the reference version; it explains what's happening in the simulation, whereas the
+other versions will only explain differences. If you don't care about the simulation and are only here to look at
+units, feel free to skim over this or skip it entirely.
+
+[Check out the code here](src/rust-no-units.md).
+
+## 2. Units Outside
+
+In this first version with units, we use the same non-generic vector library. So, we are forced to
+wrap the vectors in units. This allows the most flexibility in what other libraries can be used
+with *dimensioned*, but isn't quite as convenient to work with as the next version.
+
+[Check out the code here](src/rust-units-outside.md).
+
+## 3. Units Inside
+
+In this final version, we treat primitives with units are just primitives, resulting in code that
+is very similar to the version with no units. It is the ideal way to use *dimensioned*.
+
+Of course, there's a catch. We need a much more flexibile vector library, which you can view
+[here](src/vector3d_generic.md). Note that it is not enough for the vector library to be generic,
+it also has to have no contraints on how types change under operations. E.g. When you multiply two
+vectors over `Meter<f64>`, you'll end up with a vector over `Meter2<f64>`, and the library has to
+allow this.
+
+So, this version has less flexibility in terms of what libraries it can be used with, but allows
+treating primitives with units as just primitives, which turns out to be *really* nice.
+
+[Check out the code here](src/rust-units-inside.md).

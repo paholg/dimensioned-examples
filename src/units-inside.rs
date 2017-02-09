@@ -1,37 +1,28 @@
-//@ Introduction goes here
-//@
+//@ # Hard sphere fluid Monte Carlo simulation with units on the inside.
+//@ ---
 
 extern crate dimensioned as dim;
 extern crate time;
 
-use dim::si::{self, Meter, M, Second, S, MIN, HR, DAY};
-
-use std::path::Path;
-
-use std::fs::File;
-use std::io::Write;
-
-use vector3d_generic::Vector3d;
+//@ Because we are using a much nicer, incredibly generic vector library, there is very little extra work
+//@ for us to do in this program to get units.
 
 mod vector3d_generic;
+use vector3d_generic::Vector3d;
 
-//@ Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`.
+use dim::si::{self, Meter, M};
 
 const R: Meter<f64> = Meter {
     value_unsafe: 1.0,
     _marker: std::marker::PhantomData,
 };
 
-//@ We'll define our own wrapper around `precise_time_s` so that it has units.
-
-#[inline]
-fn time() -> Second<f64> {
-    time::precise_time_s() * S
+fn time() -> si::Second<f64> {
+    time::precise_time_s() * si::S
 }
 
-//@ We're just doing very basic argument parsing for now.
-
 fn main() {
+
     let argv: Vec<String> = std::env::args().collect();
 
     if argv.len() != 5 {
@@ -43,37 +34,18 @@ fn main() {
         panic!("Arguments bad!");
     }
 
-    //@ These immutable variable determine the parameters of the simulation.
-
     let n: usize = argv[1].parse().expect("Need integer for N");
     let len = argv[2].parse::<f64>().expect("Neat float for len") * M;
     let iterations: usize = argv[3].parse().expect("Need integer for iterations");
     let scale: f64 = 0.05;
-    let de_density = 0.01 * M;
+    let dz_density = 0.01 * M;
     let density_fname = &argv[4];
-    let density_path = Path::new(density_fname);
+    let density_path = std::path::Path::new(density_fname);
 
-    //@ As the simulation runs, we would like to keep a histogram of where we've seen
-    //@ spheres. This will let us find the density.
-    //@ Periodically, we will check where they all are, and for each sphere, the bin that contains
-    //@ its center will get a count.
-    //@
-    //@ The `Deref` trait is implemented for `SI<V, A> -> V` only for dimensionless quantities, so
-    //@ we can go from `len/de_density` to a primitive in a convenient, yet dimensionally safe,
-    //@ manner.
-
-    let density_bins: usize = *(len / de_density + 0.5) as usize;
-
-    //@ We only have walls in the z dimension, which means the density will be constant in the x
-    //@ and y dimensions. We don't care about getting that data, so our histogram can be just
-    //@ one-dimensional.
+    let density_bins: usize = *(len / dz_density + 0.5) as usize;
 
     let mut density_histogram: Vec<usize> = vec![0; density_bins];
     let mut spheres: Vec<Vector3d<Meter<f64>>> = Vec::with_capacity(n);
-
-    //@ We will now set up an initial grid of spheres. We will place them on a face-centered cubic (FCC)
-    //@ grid. This allows the closest possible packing of spheres, although realistically we won't
-    //@ want to run this simulation with densities that high.
 
     let min_cell_width = 2.0 * 2.0f64.sqrt() * R;
     let cells = *(len / min_cell_width) as usize;
@@ -82,6 +54,9 @@ fn main() {
     if cell_w < min_cell_width {
         panic!("Placement cell size too small");
     }
+
+    //@ This is exactly the same code we had when we weren't using units at all. All that messy
+    //@ `value_unsafe` stuff is gone!
 
     let offset = [Vector3d::new(0.0*M,  cell_w, cell_w) / 2.0,
                   Vector3d::new(cell_w, 0.0*M,  cell_w) / 2.0,
@@ -94,6 +69,8 @@ fn main() {
         for j in 0..cells {
             for k in 0..cells {
                 for off in offset.iter() {
+
+                    //@ Here too. We can forget we even have units most of the time.
 
                     let x = (i as f64) * cell_w;
                     let y = (j as f64) * cell_w;
@@ -115,39 +92,23 @@ fn main() {
 
     for i in 0..n {
         for j in i+1..n {
-            if overlap(spheres[i], spheres[j], len) {
-                panic!("Error in sphere placement!!!");
-            }
+            assert!(!overlap(spheres[i], spheres[j], len));
         }
     }
 
     println!("Placed spheres!");
 
-
-    //@ We'll output data starting at this interval, and doubling each time
-
-    let mut output_period = 1.0 * S;
-
-    //@ until we reach this interval
-
+    let mut output_period = 1.0 * si::S;
     let max_output_period = 30.0 * si::MIN;
 
-    //@ Let's start the clock!
     let start_time = time();
     let mut last_output = start_time;
 
-    //@ Here's our main program loop
-
     for iteration in 1..iterations + 1 {
-
-        //@ We'll start by moving each sphere once
 
         for i in 0..n {
             let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
-
-            //@ Unlike before, we have to check sphere *i* against all spheres *j*, not just the
-            //@ ones with higher indices, because we're moving them as we go.
 
             for j in 0..n {
                 if j != i && overlap(spheres[i], spheres[j], len) {
@@ -156,24 +117,18 @@ fn main() {
                 }
             }
 
-            //@ We only want to keep the move if it was valid. We can't be moving our spheres into
-            //@ eachother!
-
             if !overlaps {
                 spheres[i] = temp;
             }
         }
 
-        //@ Now we update the histogram wherever we have spheres. We could do this more or less
-        //@ frequently, but after moving all the spheres seems like a pretty good time.  Note that we
-        //@ get to use that dereference trick again to go from `Unitless<f64>` to `f64` safely.
+        for sphere in &spheres {
 
-        for i in 0..n {
-            let z_i: usize = *(spheres[i][2] / de_density) as usize;
+            //@ As our vectors are now on the outside, we have no problem calling `sphere.z`.
+
+            let z_i = *(sphere.z / dz_density) as usize;
             density_histogram[z_i] += 1;
         }
-
-        //@ If enough time has lapsed, we'll save our data to a file.
 
         let now = time();
         if (now - last_output > output_period) || iteration == iterations {
@@ -185,27 +140,21 @@ fn main() {
             };
             let elapsed = now - start_time;
 
-            //@ Note that, like `Deref`, this `map` function is only defined for unitless
-            //@ quantities. There is also a `map_unsafe()` function that works on quantities with
-            //@ units, but its use should be avoided if possible as it circumvents all the unit
-            //@ safety that dimensioned provides.
-
             use dim::Map;
-            let seconds = (elapsed / S).map(|x| x as usize) % 60;
-            let minutes = (elapsed / MIN).map(|x| x as usize) % 60;
-            let hours = (elapsed / HR).map(|x| x as usize) % 24;
-            let days = (elapsed / DAY).map(|x| x as usize);
-
+            let seconds = (elapsed / si::S).map(|x| x as usize) % 60;
+            let minutes = (elapsed / si::MIN).map(|x| x as usize) % 60;
+            let hours = (elapsed / si::HR).map(|x| x as usize) % 24;
+            let days = (elapsed / si::DAY).map(|x| x as usize);
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
                       complete.", days, hours, minutes, seconds, iteration);
 
-            //@ Saving density
-            let mut densityout = File::create(&density_path).expect("Couldn't make file!");
-            let zbins: usize = *(len / de_density) as usize;
+            let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
+            let zbins: usize = *(len / dz_density) as usize;
             for z_i in 0..zbins {
-                let z = (z_i as f64 + 0.5) * de_density;
+                let z = (z_i as f64 + 0.5) * dz_density;
                 let zhist = density_histogram[z_i];
                 let data = format!("{:6.3}   {}\n", z / R, zhist);
+                use std::io::Write;
                 match densityout.write(data.as_bytes()) {
                     Ok(_) => (),
                     Err(e) => println!("error writing {}", e),
@@ -213,9 +162,6 @@ fn main() {
             }
         }
     }
-    // ---------------------------------------------------------------------------
-    // END OF MAIN PROGRAM LOOP
-    // ---------------------------------------------------------------------------
 }
 
 fn fix_periodic(mut v: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<f64>> {
@@ -242,6 +188,9 @@ fn periodic_diff(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f6
     }
     v
 }
+
+//@ Because of how generic this `Vector3d` is, each of its functions is in its own trait, so we
+//@ have to get that trait into scope before using it.
 
 use vector3d_generic::Norm2;
 fn overlap(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f64>) -> bool {

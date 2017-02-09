@@ -1,15 +1,24 @@
-//@ We'll start by importing only the things that we'll be using a lot.
+//@ # Hard sphere fluid Monte Carlo simulation with units on the outside.
+//@ ---
+
+//@ We will be using units from `dimensioned`.
 
 extern crate dimensioned as dim;
+
 extern crate time;
 
 mod vector3d;
 use vector3d::Vector3d;
 
+//@ We only require a unit for length. While a hard sphere fluid with particles of meter length is
+//@ silly, it doesn't really mater what unit we use; we want to work in terms of dimensionless
+//@ quantities, and using any unit lets us enforce that.
+
 use dim::si::{self, Meter, M};
 
 //@ Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`. In this
-//@ case, we could just do `const R: Meter<f64> = M;` but we may wish to change its value.
+//@ case, we could just do `const R: Meter<f64> = M;` but this lets us choose a different value for
+// `R` if we so wish.
 
 const R: Meter<f64> = Meter {
     value_unsafe: 1.0,
@@ -18,7 +27,7 @@ const R: Meter<f64> = Meter {
 
 
 //@ We will need the `norm2()` function from `Vector3d`, so let's make it work on vectors with
-//@ units. First, we'll define a trait for it because we love member functions.
+//@ units. First, we'll define a trait.
 
 trait Norm2 {
     type Output;
@@ -36,13 +45,19 @@ trait Norm2 {
 //@ unit system.
 //@
 //@ The `norm2` funtion is a particulary nice case study for this pattern, because it's rather simple
-//@ and yet involes changing both the value type and the units of our object.
+//@ and yet involves changing both the value type and the units of our object.
 
 use std::ops::Mul;
 use dim::{Dimensioned, MapUnsafe};
 use dim::typenum::{Prod, P2};
 impl<D, U> Norm2 for D where
     U: Mul<P2>,
+
+    //@ It's a bit awkward to parse at first, but this `where` constraint tells us exactly what's
+    //@ happening. We are going from something `Dimensioned` with value-type `Vector3d` and
+    //@ unit-type `U` to value-type `f64` and unit-type `U*2`. Note that unit-types are in terms of
+    //@ powers, so squaring a value means multiplying its units by two.
+
     D: Dimensioned<Value = Vector3d, Units = U> + MapUnsafe<f64, Prod<U, P2>>,
 {
     type Output = <D as MapUnsafe<f64, Prod<U, P2>>>::Output;
@@ -51,18 +66,13 @@ impl<D, U> Norm2 for D where
     }
 }
 
-//@ Notice that `MapUnsafe` is parametrized by the output types of your value and units, like so:
-//@ `MapUnsafe<ValueOut, UnitsOut>`. The new units are defined just by the associated type, `Output`
-//@ (in this case, by the expression `Prod<U, P2>` which means the new units are whatever the old ones
-//@ were, only doubled), whereas the new value type (`f64` here) needs to be specified there and
-//@ altered in the function body (the call to `norm2` here).
-//@
-//@
 //@ Other vector operations could be similarly implemented, but they are not needed here, and so their
 //@ implementation is left as an exercise for the reader.
 //@
+//@ Note, though, that we get any arithmetic operations for free, as they are defined in `dimensioned`.
 //@
-//@ We'll define our own wrapper around `precise_time_s` so that it has units.
+//@
+//@ Let's define our own wrapper around `precise_time_s` so that it has units.
 
 fn time() -> si::Second<f64> {
     time::precise_time_s() * si::S
@@ -83,19 +93,25 @@ fn main() {
     }
 
     let n: usize = argv[1].parse().expect("Need integer for N");
+
+    //@ Note that all quantities of length have units now.
+
     let len = argv[2].parse::<f64>().expect("Neat float for len") * M;
+
     let iterations: usize = argv[3].parse().expect("Need integer for iterations");
     let scale: f64 = 0.05;
 
-    let de_density = 0.01 * M;
+    let dz_density = 0.01 * M;
     let density_fname = &argv[4];
     let density_path = std::path::Path::new(density_fname);
 
-    //@ The `Deref` trait is implemented for `SI<V, A> -> V` only for dimensionless quantities, so
-    //@ we can go from `len/de_density` (which both have units of `Meter`) to a primitive in a
-    //@ convenient, yet dimensionally safe, manner.
+    //@ The `Deref` trait is implemented for `SI<V, U> -> V` (where `V` is the value type, and `U`
+    //@ is the units type) only for dimensionless quantities, so we can go from `len/dz_density`
+    //@ (which both have units of `Meter`) to a primitive in a convenient, yet dimensionally safe,
+    //@ manner. The only difference between this line and the equivalent one with no units is the
+    //@ asterisk.
 
-    let density_bins: usize = *(len / de_density + 0.5) as usize;
+    let density_bins = *(len / dz_density + 0.5) as usize;
 
     let mut density_histogram: Vec<usize> = vec![0; density_bins];
     let mut spheres: Vec<Meter<Vector3d>> = Vec::with_capacity(n);
@@ -110,16 +126,17 @@ fn main() {
 
     //@ Oops, we run into our first problem here. We need to make vectors from `cell_w`, but it
     //@ has dimensions so we can't do it directly. We have to pull out the value, put that in the vector,
-    //@ and then wrap the whole vector in dimensions. This is essentially
-    //@ dimensioned's version of an unsafe block, and it could be avoided by using a generic
-    //@ vector with the dimensions on the inside.
+    //@ and then wrap the whole vector in dimensions. This is essentially dimensioned's version of
+    //@ an unsafe block, and it could be avoided by using a generic vector with the dimensions on
+    //@ the inside (which is the next method we'll cover).
 
     let offset = [Meter::new(Vector3d::new(0.0, cell_w.value_unsafe, cell_w.value_unsafe) / 2.0),
                   Meter::new(Vector3d::new(cell_w.value_unsafe, 0.0, cell_w.value_unsafe) / 2.0),
                   Meter::new(Vector3d::new(cell_w.value_unsafe, cell_w.value_unsafe, 0.0) / 2.0),
                   Meter::new(Vector3d::new(0.0, 0.0, 0.0) / 2.0)];
 
-    //@ I would have liked to wrap these vectors in dimensions by simply multiplying by `M`.
+    //@ I would have liked to wrap these vectors in dimensions by simply multiplying by `M`, as we
+    //@ have done for primitives.
     //@
     //@ We could multiply with `M` on the right, but then we would have to implement `Mul<SI<f64, A>>
     //@ for Vector3d`. That's fine in this example, but if `Vector3d` were defined in a different crate, then
@@ -129,12 +146,9 @@ fn main() {
     //@ that currently requires a nightly version of the compiler, so we won't do that either for
     //@ this example.
     //@
-    //@ So, we were forced to call the constructor `Meter::new()`.
+    //@ So, we were forced to call the constructor, `Meter::new()`.
     //@
     //@ Once our variables are wrapped in dimensions, though, this stops being an issue.
-    //@
-    //@ As we iterate over cells in the lattice, `offset` will give us the adjustments to make to
-    //@ place our spheres.
 
     let mut b: usize = 0;
     'a: for i in 0..cells {
@@ -163,14 +177,12 @@ fn main() {
 
     for i in 0..n {
         for j in i+1..n {
-            if overlap(spheres[i], spheres[j], len) {
-                panic!("Error in sphere placement!!!");
-            }
+            assert!(!overlap(spheres[i], spheres[j], len));
         }
     }
     println!("Placed spheres!");
 
-    //@ No comments needed to note that these times are 1 s and 30 min respectively!
+    //@ It's so easy to see that these times are 1 s and 30 min respectively!
 
     let mut output_period = 1.0 * si::S;
     let max_output_period = 30.0 * si::MIN;
@@ -179,6 +191,7 @@ fn main() {
     let mut last_output = start_time;
 
     for iteration in 1..iterations + 1 {
+
         for i in 0..n {
             let temp = random_move(&spheres[i], scale, len);
             let mut overlaps = false;
@@ -190,9 +203,6 @@ fn main() {
                 }
             }
 
-            //@ We only want to keep the move if it was valid. We can't be moving our spheres into
-            //@ eachother!
-
             if !overlaps {
                 spheres[i] = temp;
             }
@@ -202,9 +212,13 @@ fn main() {
 
             //@ We get to use that dereference trick again to go from `Unitless<f64>` to
             //@ `f64` safely.
-            //@ fixme: Note we're doing sphere[2] not sphere.z
+            //@
+            //@ Note that we can call `sphere[2]` because `Index` is implemented in
+            //@ *dimensioned*. We cannot, however, call `sphere.z`, as we did in the previous
+            //@ version. This, again, would not be an issue if we were using generic vectors and
+            //@ units on the inside.
 
-            let z_i: usize = *(sphere[2] / de_density) as usize;
+            let z_i = *(sphere[2] / dz_density) as usize;
             density_histogram[z_i] += 1;
         }
 
@@ -218,30 +232,29 @@ fn main() {
             };
             let elapsed = now - start_time;
 
-            //@ Note that, like `Deref`, this `map` function is only defined for `Unitless`
-            //@ quantities. There is also a `map_unsafe()` function that works on quantities with
-            //@ units, but its use should be avoided if possible as it circumvents all the unit
-            //@ safety that dimensioned provides.
+            //@ Note that, like `Deref`, `Map` is only defined for `Dimensionless`
+            //@ quantities and cannot change units. As such, it is dimensionally safe to use
+            //@ whenever you wish, unlike `MapUnsafe`.
+            //@
+            //@ We could also use `Deref` here and end up with code more like the no units version,
+            //@ but I wanted to demonstrate `Map`.
 
             use dim::Map;
             let seconds = (elapsed / si::S).map(|x| x as usize) % 60;
             let minutes = (elapsed / si::MIN).map(|x| x as usize) % 60;
             let hours = (elapsed / si::HR).map(|x| x as usize) % 24;
             let days = (elapsed / si::DAY).map(|x| x as usize);
-
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
                       complete.", days, hours, minutes, seconds, iteration);
-
-            //@ Saving density
 
             let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
 
             //@ Handy `Deref` yet again.
 
-            let zbins: usize = *(len / de_density) as usize;
+            let zbins: usize = *(len / dz_density) as usize;
 
             for z_i in 0..zbins {
-                let z = (z_i as f64 + 0.5) * de_density;
+                let z = (z_i as f64 + 0.5) * dz_density;
                 let zhist = density_histogram[z_i];
                 let data = format!("{:6.3}   {}\n", z / R, zhist);
                 use std::io::Write;
@@ -252,17 +265,16 @@ fn main() {
             }
         }
     }
-    // ---------------------------------------------------------------------------
-    // END OF MAIN PROGRAM LOOP
-    // ---------------------------------------------------------------------------
 }
+
+//@ Other than the signaturess, these functions are almost identical to the ones that don't use units.
 
 fn fix_periodic(mut v: Meter<Vector3d>, len: Meter<f64>) -> Meter<Vector3d> {
     for i in 0..3 {
         if v[i] > len {
             v[i] -= len;
         }
-        if v[i] < 0.0 * M {
+        if v[i] < 0.0*M {
             v[i] += len;
         }
     }

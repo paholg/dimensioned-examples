@@ -9,16 +9,16 @@ build = "build.rs"
 
 [dependencies]
   time = "*"
-  dimensioned = { path =  "../dimensioned" }
+  dimensioned = { git =  "https://github.com/paholg/dimensioned", branch = "rmdim" }
 
 [build-dependencies]
   tango = "*"
 
 [[bin]]
-  name = "v1-no-units"
+  name = "no-units"
 
 [[bin]]
-  name = "rust-units-outside"
+  name = "units-outside"
 
 [[bin]]
-  name = "rust-units-inside"
+  name = "units-inside"
