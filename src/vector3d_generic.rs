@@ -112,7 +112,7 @@ impl<T> Neg for Vector3d<T> where T: Neg<Output = T> {
 }
 
 //@ For `Mul` and `Div`, we need type to be able to change. For example, if we multiply
-//@ `Vector3d<Newton<f64>>` by `Meter<f64>`, we will end up with `Vector3d<Newton<f64>>`.
+//@ `Vector3d<Newton<f64>>` by `Meter<f64>`, we will end up with `Vector3d<Joule<f64>>`.
 
 use std::ops::Mul;
 use dim::typenum::Prod;
