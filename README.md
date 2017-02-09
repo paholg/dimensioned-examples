@@ -67,7 +67,7 @@ brief overview of each file, and then a link to it.
 ## 1. No Units
 
 Let's start with the basic simulation. For simplicity, we use a very basic, non-generic 3d vector
-library, which you can read about [here](src/vector3d.md).
+library, which you can [check out here](src/vector3d.md).
 
 The only thing of note is the random number generation, which was done that way only because we
 wanted identical results for the Rust and C++ code, so they both use the same, basic random number

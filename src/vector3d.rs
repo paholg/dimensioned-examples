@@ -1,4 +1,7 @@
-//@ This is a very basic, no-frills 3d vector library. It provides only vectors over `f64`.
+//@ # Simple 3d Vectors
+
+//@ We implement our own basic random number generator so that we will get identical results to
+//@ the C++ version. In a real simulation, we would use something better.
 
 static mut RAN: Random = Random {
     ran_x: 123456789,
@@ -29,13 +32,16 @@ impl Random {
     }
 }
 
-/// Basic 3d vector class. It currently only support 64 bit floats
+//@ We will make our vector very simple, only supporting `f64`.
+
 #[derive(Clone, Copy)]
 pub struct Vector3d {
     pub x: f64,
     pub y: f64,
     pub z: f64,
 }
+
+//@ Let's define all the basic vector operations one might want.
 
 impl Vector3d {
     pub fn new(x: f64, y: f64, z: f64) -> Vector3d {
@@ -70,6 +76,9 @@ impl Vector3d {
             z: self.z / n,
         }
     }
+
+    //@ For our Monte Carlo simulation, we will need to be able to create random vectors in a
+    //@ Gaussian distribution. That's what this function does.
 
     pub fn ran(scale: f64) -> Vector3d {
         unsafe {
@@ -117,8 +126,6 @@ impl Add<Vector3d> for Vector3d {
     }
 }
 
-//@
-
 use std::ops::Sub;
 impl Sub<Vector3d> for Vector3d {
     type Output = Vector3d;
@@ -130,8 +137,6 @@ impl Sub<Vector3d> for Vector3d {
         }
     }
 }
-
-//@
 
 use std::ops::Neg;
 impl Neg for Vector3d {
@@ -145,8 +150,6 @@ impl Neg for Vector3d {
     }
 }
 
-//@
-
 use std::ops::Mul;
 impl Mul<f64> for Vector3d {
     type Output = Vector3d;
@@ -159,8 +162,6 @@ impl Mul<f64> for Vector3d {
     }
 }
 
-//@
-
 impl Mul<Vector3d> for f64 {
     type Output = Vector3d;
     fn mul(self, v: Vector3d) -> Vector3d {
@@ -171,8 +172,6 @@ impl Mul<Vector3d> for f64 {
         }
     }
 }
-
-//@ We'll want to be able to divide vectors by scalars.
 
 use std::ops::Div;
 impl Div<f64> for Vector3d {
@@ -213,7 +212,7 @@ impl IndexMut<usize> for Vector3d {
     }
 }
 
-//@ For debugging, it may be useful to display our vectors as an ordered triple, so let's implement it.
+//@ For debugging, it may be useful to display our vectors as an ordered triple, so let's implement that too.
 
 use std::fmt;
 impl fmt::Display for Vector3d {

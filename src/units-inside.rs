@@ -1,5 +1,4 @@
 //@ # Hard sphere fluid Monte Carlo simulation with units on the inside.
-//@ ---
 
 extern crate dimensioned as dim;
 extern crate time;
@@ -87,9 +86,6 @@ fn main() {
         }
     }
 
-    //@ Let's verify that we didn't place any spheres overlapping eachother, as they would get
-    //@ stuck like that and mess up the simulation results.
-
     for i in 0..n {
         for j in i+1..n {
             assert!(!overlap(spheres[i], spheres[j], len));
@@ -175,6 +171,8 @@ fn fix_periodic(mut v: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<
     }
     v
 }
+
+//@
 
 fn periodic_diff(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<f64>> {
     let mut v = b - a;

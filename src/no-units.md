@@ -1,5 +1,4 @@
 # Hard sphere fluid Monte Carlo simulation with no units.
----
 
 Not used for the simulation itself, but we want to save to file at fixed intervals and to know
 for how long we've been running the simulation.

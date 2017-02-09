@@ -1,5 +1,4 @@
 //@ # Hard sphere fluid Monte Carlo simulation with units on the outside.
-//@ ---
 
 //@ We will be using units from *dimensioned*.
 
