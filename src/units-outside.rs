@@ -1,7 +1,7 @@
 //@ # Hard sphere fluid Monte Carlo simulation with units on the outside.
 //@ ---
 
-//@ We will be using units from `dimensioned`.
+//@ We will be using units from *dimensioned*.
 
 extern crate dimensioned as dim;
 
@@ -34,7 +34,7 @@ trait Norm2 {
     fn norm2(self) -> Self::Output;
 }
 
-//@ Now, we'll implement it using the handy `MapUnsafe` trait from `dimensioned`. It is so named
+//@ Now, we'll implement it using the handy `MapUnsafe` trait from *dimensioned*. It is so named
 //@ because it gives us unlimited power over our value and its units, thereby disregarding all the
 //@ dimensional safety that this library provides. It's a lot like the `unsafe` keyword, only for
 //@ dimensional safety instead of memory safety. Once we've ensured that `norm2` is implemented
@@ -69,7 +69,7 @@ impl<D, U> Norm2 for D where
 //@ Other vector operations could be similarly implemented, but they are not needed here, and so their
 //@ implementation is left as an exercise for the reader.
 //@
-//@ Note, though, that we get any arithmetic operations for free, as they are defined in `dimensioned`.
+//@ Note, though, that we get any arithmetic operations for free, as they are defined in *dimensioned*.
 //@
 //@
 //@ Let's define our own wrapper around `precise_time_s` so that it has units.

@@ -2,7 +2,7 @@
 
 This repository contains four versions of the same simulation; a C++ version, a Rust version with
 no units, and two Rust versions with units that demonstrate different ways to use
-[`dimensioned`](https://github.com/paholg/dimensioned/).
+[*dimensioned*](https://github.com/paholg/dimensioned/).
 
 # Usage
 
@@ -77,7 +77,7 @@ Consider this the reference version; it explains what's happening in the simulat
 other versions will only explain differences. If you don't care about the simulation and are only here to look at
 units, feel free to skim over this or skip it entirely.
 
-[Check out the code here](src/rust-no-units.md).
+[Check out the code here](src/no-units.md).
 
 ## 2. Units Outside
 
@@ -85,7 +85,7 @@ In this first version with units, we use the same non-generic vector library. So
 wrap the vectors in units. This allows the most flexibility in what other libraries can be used
 with *dimensioned*, but isn't quite as convenient to work with as the next version.
 
-[Check out the code here](src/rust-units-outside.md).
+[Check out the code here](src/units-outside.md).
 
 ## 3. Units Inside
 
@@ -101,4 +101,4 @@ allow this.
 So, this version has less flexibility in terms of what libraries it can be used with, but allows
 treating primitives with units as just primitives, which turns out to be *really* nice.
 
-[Check out the code here](src/rust-units-inside.md).
+[Check out the code here](src/units-inside.md).
