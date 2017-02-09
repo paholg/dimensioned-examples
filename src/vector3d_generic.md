@@ -91,7 +91,7 @@ impl Vector3d<f64> {
 }
 ```
 
-These three operators (`Add`, `Sub`, and `Neg`) no not change units, and so we can implement
+These three operators (`Add`, `Sub`, and `Neg`) do not change units, and so we can implement
 them expecting type `T` to not change. We could be more generic, and implement them similarly to
 how we will do `Mul`, but I'm not sure that anything would require that.
 
