@@ -1,5 +1,8 @@
 # Conversion Example
 
+To run this example, clone this repository, run `cargo build`, and then run `cargo run --bin
+conversion`. You must run `cargo build` first as that generates the `.rs` files.
+
 ```rust
 #[macro_use]
 extern crate dimensioned as dim;
