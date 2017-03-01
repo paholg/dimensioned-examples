@@ -22,3 +22,6 @@ build = "build.rs"
 
 [[bin]]
   name = "units-inside"
+
+[[bin]]
+  name = "conversion"

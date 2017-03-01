@@ -58,17 +58,16 @@ and yet involves changing both the value type and the units of our object.
 use std::ops::Mul;
 use dim::{Dimensioned, MapUnsafe};
 use dim::typenum::{Prod, P2};
-impl<D, U> Norm2 for D where
-    U: Mul<P2>,
+impl<D, U> Norm2 for D
+    where U: Mul<P2>,
 ```
 
 It's a bit awkward to parse at first, but this `where` constraint tells us exactly what's
 happening. We are going from something `Dimensioned` with value-type `Vector3d` and
 unit-type `U` to value-type `f64` and unit-type `U*2`. Note that unit-types are in terms of
 powers, so squaring a value means multiplying its units by two.
-
 ```rust
-    D: Dimensioned<Value = Vector3d, Units = U> + MapUnsafe<f64, Prod<U, P2>>,
+          D: Dimensioned<Value = Vector3d, Units = U> + MapUnsafe<f64, Prod<U, P2>>
 {
     type Output = <D as MapUnsafe<f64, Prod<U, P2>>>::Output;
     fn norm2(self) -> Self::Output {
@@ -100,7 +99,8 @@ fn main() {
     where N is the number of spheres (must be a cube),
         len is the length of the cell sides,
         iter is the number of iterations to run for,
-        fname is name to save the density file.", argv[0]);
+        fname is name to save the density file.",
+                 argv[0]);
         panic!("Arguments bad!");
     }
 
@@ -200,7 +200,7 @@ At least we get the benefit of our dimensions for this addition.
     }
 
     for i in 0..n {
-        for j in i+1..n {
+        for j in i + 1..n {
             assert!(!overlap(spheres[i], spheres[j], len));
         }
     }
@@ -275,7 +275,12 @@ but I wanted to demonstrate `Map`.
             let hours = (elapsed / si::HR).map(|x| x as usize) % 24;
             let days = (elapsed / si::DAY).map(|x| x as usize);
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
-                      complete.", days, hours, minutes, seconds, iteration);
+                      complete.",
+                     days,
+                     hours,
+                     minutes,
+                     seconds,
+                     iteration);
 
             let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
 ```
@@ -308,7 +313,7 @@ fn fix_periodic(mut v: Meter<Vector3d>, len: Meter<f64>) -> Meter<Vector3d> {
         if v[i] > len {
             v[i] -= len;
         }
-        if v[i] < 0.0*M {
+        if v[i] < 0.0 * M {
             v[i] += len;
         }
     }

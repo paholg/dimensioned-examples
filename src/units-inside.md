@@ -32,7 +32,8 @@ fn main() {
     where N is the number of spheres (must be a cube),
         len is the length of the cell sides,
         iter is the number of iterations to run for,
-        fname is name to save the density file.", argv[0]);
+        fname is name to save the density file.",
+                 argv[0]);
         panic!("Arguments bad!");
     }
 
@@ -62,10 +63,10 @@ This is exactly the same code we had when we weren't using units at all. All tha
 `value_unsafe` stuff is gone!
 
 ```rust
-    let offset = [Vector3d::new(0.0*M,  cell_w, cell_w) / 2.0,
-                  Vector3d::new(cell_w, 0.0*M,  cell_w) / 2.0,
-                  Vector3d::new(cell_w, cell_w, 0.0*M) / 2.0,
-                  Vector3d::new(0.0*M,  0.0*M,  0.0*M) / 2.0];
+    let offset = [Vector3d::new(0.0 * M, cell_w, cell_w) / 2.0,
+                  Vector3d::new(cell_w, 0.0 * M, cell_w) / 2.0,
+                  Vector3d::new(cell_w, cell_w, 0.0 * M) / 2.0,
+                  Vector3d::new(0.0 * M, 0.0 * M, 0.0 * M) / 2.0];
 
 
     let mut b: usize = 0;
@@ -94,7 +95,7 @@ Here too. We can forget we even have units most of the time.
     }
 
     for i in 0..n {
-        for j in i+1..n {
+        for j in i + 1..n {
             assert!(!overlap(spheres[i], spheres[j], len));
         }
     }
@@ -151,7 +152,12 @@ As our vectors are now on the outside, we have no problem calling `sphere.z`.
             let hours = (elapsed / si::HR).map(|x| x as usize) % 24;
             let days = (elapsed / si::DAY).map(|x| x as usize);
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
-                      complete.", days, hours, minutes, seconds, iteration);
+                      complete.",
+                     days,
+                     hours,
+                     minutes,
+                     seconds,
+                     iteration);
 
             let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
             let zbins: usize = *(len / dz_density) as usize;
@@ -185,7 +191,10 @@ fn fix_periodic(mut v: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<
 
 
 ```rust
-fn periodic_diff(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<f64>> {
+fn periodic_diff(a: Vector3d<Meter<f64>>,
+                 b: Vector3d<Meter<f64>>,
+                 len: Meter<f64>)
+                 -> Vector3d<Meter<f64>> {
     let mut v = b - a;
     for i in 0..3 {
         if v[i] > 0.5 * len {
@@ -210,6 +219,6 @@ fn overlap(a: Vector3d<Meter<f64>>, b: Vector3d<Meter<f64>>, len: Meter<f64>) ->
 }
 
 fn random_move(v: &Vector3d<Meter<f64>>, scale: f64, len: Meter<f64>) -> Vector3d<Meter<f64>> {
-    fix_periodic(*v + Vector3d::ran(scale)*M, len)
+    fix_periodic(*v + Vector3d::ran(scale) * M, len)
 }
 ```

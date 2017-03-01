@@ -34,7 +34,8 @@ This is just a test program, so we'll do some very simple argument parsing.
     where N is the number of spheres (must be a cube),
         len is the length of the cell sides,
         iter is the number of iterations to run for,
-        fname is name to save the density file.", argv[0]);
+        fname is name to save the density file.",
+                 argv[0]);
         panic!("Arguments bad!");
     }
 ```
@@ -116,10 +117,10 @@ want to move them a bunch before taking data, so that they start in a higher ent
         panic!("Placement cell size too small");
     }
 
-    let offset: [Vector3d; 4] = [Vector3d::new(0.0,    cell_w, cell_w) / 2.0,
-                                 Vector3d::new(cell_w, 0.0,    cell_w) / 2.0,
-                                 Vector3d::new(cell_w, cell_w, 0.0   ) / 2.0,
-                                 Vector3d::new(0.0,    0.0,    0.0   )];
+    let offset: [Vector3d; 4] = [Vector3d::new(0.0, cell_w, cell_w) / 2.0,
+                                 Vector3d::new(cell_w, 0.0, cell_w) / 2.0,
+                                 Vector3d::new(cell_w, cell_w, 0.0) / 2.0,
+                                 Vector3d::new(0.0, 0.0, 0.0)];
     let mut b: usize = 0;
     'a: for i in 0..cells {
         for j in 0..cells {
@@ -148,7 +149,7 @@ for a given cell volume.
 
 ```rust
     for i in 0..n {
-        for j in i+1..n {
+        for j in i + 1..n {
             assert!(!overlap(spheres[i], spheres[j], len));
         }
     }
@@ -244,7 +245,12 @@ Finally, if enough time has passed, let's save our density data to a file.
             let hours = ((elapsed / 3600.0) as usize) % 24;
             let days = (elapsed / 86400.0) as usize;
             println!("(Rust) Saving data after {} days, {:02}:{:02}:{:02}, {} iterations \
-                      complete.", days, hours, minutes, seconds, iteration);
+                      complete.",
+                     days,
+                     hours,
+                     minutes,
+                     seconds,
+                     iteration);
 
             let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
             let zbins: usize = (len / dz_density) as usize;

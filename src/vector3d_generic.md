@@ -97,7 +97,9 @@ how we will do `Mul`, but I'm not sure that anything would require that.
 
 ```rust
 use std::ops::Add;
-impl<T> Add<Vector3d<T>> for Vector3d<T> where T: Add<T, Output = T> {
+impl<T> Add<Vector3d<T>> for Vector3d<T>
+    where T: Add<T, Output = T>
+{
     type Output = Vector3d<T>;
     fn add(self, rhs: Vector3d<T>) -> Self::Output {
         Vector3d::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
@@ -105,7 +107,9 @@ impl<T> Add<Vector3d<T>> for Vector3d<T> where T: Add<T, Output = T> {
 }
 
 use std::ops::Sub;
-impl<T> Sub<Vector3d<T>> for Vector3d<T> where T: Sub<T, Output = T> {
+impl<T> Sub<Vector3d<T>> for Vector3d<T>
+    where T: Sub<T, Output = T>
+{
     type Output = Vector3d<T>;
     fn sub(self, rhs: Vector3d<T>) -> Self::Output {
         Vector3d::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
@@ -113,7 +117,9 @@ impl<T> Sub<Vector3d<T>> for Vector3d<T> where T: Sub<T, Output = T> {
 }
 
 use std::ops::Neg;
-impl<T> Neg for Vector3d<T> where T: Neg<Output = T> {
+impl<T> Neg for Vector3d<T>
+    where T: Neg<Output = T>
+{
     type Output = Vector3d<T>;
     fn neg(self) -> Self::Output {
         Vector3d::new(-self.x, -self.y, -self.z)
@@ -127,16 +133,22 @@ For `Mul` and `Div`, we need type to be able to change. For example, if we multi
 ```rust
 use std::ops::Mul;
 use dim::typenum::Prod;
-impl<T, U> Mul<U> for Vector3d<T> where T: Mul<U>, U: Clone {
+impl<T, U> Mul<U> for Vector3d<T>
+    where T: Mul<U>,
+          U: Clone
+{
     type Output = Vector3d<Prod<T, U>>;
     fn mul(self, rhs: U) -> Self::Output {
-        Vector3d::new(self.x * rhs.clone(), self.y * rhs.clone(),  self.z * rhs)
+        Vector3d::new(self.x * rhs.clone(), self.y * rhs.clone(), self.z * rhs)
     }
 }
 
 use std::ops::Div;
 use dim::typenum::Quot;
-impl<T, U> Div<U> for Vector3d<T> where T: Div<U>, U: Clone {
+impl<T, U> Div<U> for Vector3d<T>
+    where T: Div<U>,
+          U: Clone
+{
     type Output = Vector3d<Quot<T, U>>;
     fn div(self, rhs: U) -> Self::Output {
         Vector3d::new(self.x / rhs.clone(), self.y / rhs.clone(), self.z / rhs)
@@ -160,7 +172,7 @@ messier.
 ```rust
 impl<T, U> Dot<Vector3d<U>> for Vector3d<T>
     where T: Mul<U>,
-          Prod<T, U>: Add<Output = Prod<T, U>>,
+          Prod<T, U>: Add<Output = Prod<T, U>>
 {
     type Output = Prod<T, U>;
     fn dot(self, rhs: Vector3d<U>) -> Self::Output {
@@ -178,16 +190,15 @@ pub trait Cross<Rhs = Self> {
 }
 
 impl<T, U> Cross<Vector3d<U>> for Vector3d<T>
-    where T: Mul<U> + Copy, U: Copy,
-          Prod<T, U>: Sub<Output = Prod<T, U>>,
+    where T: Mul<U> + Copy,
+          U: Copy,
+          Prod<T, U>: Sub<Output = Prod<T, U>>
 {
     type Output = Vector3d<Prod<T, U>>;
     fn cross(self, rhs: Vector3d<U>) -> Self::Output {
-        Vector3d::new(
-            self.y * rhs.z - self.z * rhs.y,
-            self.z * rhs.x - self.x * rhs.z,
-            self.x * rhs.y - self.y * rhs.x,
-        )
+        Vector3d::new(self.y * rhs.z - self.z * rhs.y,
+                      self.z * rhs.x - self.x * rhs.z,
+                      self.x * rhs.y - self.y * rhs.x)
     }
 }
 ```
@@ -205,7 +216,7 @@ To implement norm-squared, we can just call out to `Dot` that we've already defi
 
 ```rust
 impl<T> Norm2 for Vector3d<T>
-    where Vector3d<T>: Copy + Dot,
+    where Vector3d<T>: Copy + Dot
 {
     type Output = <Vector3d<T> as Dot>::Output;
     fn norm2(self) -> Self::Output {
@@ -237,7 +248,7 @@ We will go with option 3.
 use dim::Sqrt;
 impl<T> Norm for Vector3d<T>
     where Vector3d<T>: Norm2,
-    <Vector3d<T> as Norm2>::Output: Sqrt,
+          <Vector3d<T> as Norm2>::Output: Sqrt
 {
     type Output = <<Vector3d<T> as Norm2>::Output as Sqrt>::Output;
     fn norm(self) -> Self::Output {
@@ -255,7 +266,7 @@ pub trait Normalized {
 }
 
 impl<T> Normalized for Vector3d<T>
-    where Vector3d<T>: Clone + Norm + Div<<Vector3d<T> as Norm>::Output>,
+    where Vector3d<T>: Clone + Norm + Div<<Vector3d<T> as Norm>::Output>
 {
     type Output = Quot<Self, <Self as Norm>::Output>;
     fn normalized(self) -> Self::Output {
@@ -294,7 +305,9 @@ impl<T> IndexMut<usize> for Vector3d<T> {
 }
 
 use std::fmt;
-impl<T> fmt::Display for Vector3d<T> where T: fmt::Display {
+impl<T> fmt::Display for Vector3d<T>
+    where T: fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
