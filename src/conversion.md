@@ -8,9 +8,9 @@ conversion`. You must run `cargo build` first as that generates the `.rs` files.
 extern crate dimensioned as dim;
 ```
 
-This example covers creating a unit system and implementing unit conversion between it and
-other systems. While this may be useful at times, you can get most of the same functionality by
-staying in one unit system and using its defined constants.
+This example covers creating a unit system and implementing unit conversion between it and other
+systems. While this may be useful at times, you can get most of the same functionality by staying
+in one unit system and using its defined constants.
 
 For example, say that your input data is in feet, want to store it and work with it in SI units,
 and then want to output it in inches.
@@ -28,9 +28,9 @@ First our input:
     let x = 3.0 * si::FT;
 ```
 
-Now, for our output, we can simply divide `x` by the inch constant. Since the result will be dimensionless,
-we can `Deref` it, obtaining an `f64`. Note that this checks our units for us; if `x` were
-anything but a length, we would get a compile-time error.
+Now, for our output, we can simply divide `x` by the inch constant. Since the result will be
+dimensionless, we can `Deref` it, obtaining an `f64`. Note that this checks our units for us; if
+`x` were anything but a length, we would get a compile-time error.
 
 ```rust
     let out: f64 = *(x / si::IN);
@@ -43,10 +43,10 @@ That said, let's get on with the example you came here for.
 First, let's make a new unit system. It's just a demo, so we'll make a simple one. If you want the
 details on how this works, check out the dimensioned documentation on `make_units!`.
 
-The quick version is: We're making a unit system named `FM` with only two base units, foot and
-minute. We create the type aliases `Foot<V>` and `Minute<V>` for our base units, with associated
-constants `FT` and `MIN` that each have a value of `1.0` of their respective types. We also
-create some more constants that might be useful.
+The quick version is: We're making a unit system named `FM` with only two base units, `Foot` and
+`Minute`. We create the type aliases `Foot<V>` and `Minute<V>` for our base units, with associated
+constants `FT` and `MIN` that each have a value of `1.0` of their respective types. We also create
+some more constants that might be useful.
 
 ```rust
 mod fm {
@@ -78,11 +78,11 @@ mod fm {
 We would like to be able to convert from the `SI` unit system to our `FM` unit system, so let's
 implement `From`.
 
-The `SI` system has 7 base units. Since our system only has 2, we will define the conversion
-only when the other 5 are not present. Note that the order of the units is important, and
-`SI`'s base units are in the following order: meter, kilogram, second, ampere, kelvin, candela,
-mole. So, the first and third are the only ones we care about, mapping to our foot and minute,
-respectively.
+The `SI` system has 7 base units. Since our system only has 2, we will define the conversion only
+when the other 5 are not present. Note that the order of the units is important, and `SI`'s base
+units are in the following order: `Meter`, `Kilogram`, `Second`, `Ampere`, `Kelvin`, `Candela`
+`Mole`. So, the first and third are the only ones we care about, mapping to our `Foot` and
+`Minute`, respectively.
 
 ```rust
 use std::ops::Mul;
@@ -97,11 +97,10 @@ impl<V, Length, Time> From<
     fn from(other: si::SI<V, tarr![Length, Z0, Time, Z0, Z0, Z0, Z0]>) -> Self {
 ```
 
-Because we defined constants for the meter and second in our unit system already, we
-can just use them for the conversion factors. Note that the type-level integers in the
-type array represent the powers of each unit present (e.g. `tarr![P2, 0]` represents an
-area for our `FM` unit system), so we need to raise each conversion factor to that
-power.
+Because we defined constants for the `Meter` and `Second` in our unit system already, we can use
+them for the conversion factors. Note that the type-level integers in the type array represent the
+powers of each unit present (e.g. `tarr![P2, 0]` represents an area for our `FM` unit system), so
+we need to raise each conversion factor to that power.
 
 ```rust
         let length_fac = fm::M.value_unsafe.powi(Length::to_i32());
@@ -165,8 +164,8 @@ Note that `2.0 * si::M` and `si::Meter::new(2.0)` are equivalent.
     let x2 = 3.0 * fm::FT + 2.0 * fm::M;
 ```
 
-We should really just be asserting that these are close, since floating point
-multiplication isn't associative. But, hey, this works here.
+We should really just be asserting that these are close, since floating point multiplication isn't
+associative. But, hey, this works here.
 
 ```rust
     assert_eq!(x1, x2.into());
