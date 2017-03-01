@@ -1,5 +1,7 @@
 # Generic 3d Vectors
 
+We'll start with the same random number generator as before.
+
 ```rust
 static mut RAN: Random = Random {
     ran_x: 123456789,
@@ -42,8 +44,7 @@ pub struct Vector3d<T> {
 }
 ```
 
-Pretty much all of our functions have to be in their own traits, making the struct `impl`
-rather small.
+All of our functions have to be in their own traits, making the struct `impl` rather small.
 
 ```rust
 impl<T> Vector3d<T> {
@@ -53,8 +54,8 @@ impl<T> Vector3d<T> {
 }
 ```
 
-Generating random vectors in a Gaussian distribution pretty much requires that we're working
-with floats, so we'll only define it for vectors over `f64`.
+Generating random vectors in a Gaussian distribution requires that we're working with floats, so
+we'll only define it for vectors over `f64`.
 
 ```rust
 impl Vector3d<f64> {
@@ -91,9 +92,9 @@ impl Vector3d<f64> {
 }
 ```
 
-These three operators (`Add`, `Sub`, and `Neg`) do not change units, and so we can implement
-them expecting type `T` to not change. We could be more generic, and implement them similarly to
-how we will do `Mul`, but I'm not sure that anything would require that.
+These three operators (`Add`, `Sub`, and `Neg`) do not change units, and so we can implement them
+expecting type `T` to not change. We could be more generic, and implement them similarly to how we
+will do `Mul`, but that is added complication with no known practical gain.
 
 ```rust
 use std::ops::Add;
@@ -127,8 +128,8 @@ impl<T> Neg for Vector3d<T>
 }
 ```
 
-For `Mul` and `Div`, we need type to be able to change. For example, if we multiply
-`Vector3d<Newton<f64>>` by `Meter<f64>`, we will end up with `Vector3d<Joule<f64>>`.
+For `Mul` and `Div`, we need the parametrized type to be able to change. For example, if we
+multiply `Vector3d<Newton<f64>>` by `Meter<f64>`, we will end up with `Vector3d<Joule<f64>>`.
 
 ```rust
 use std::ops::Mul;
@@ -156,7 +157,7 @@ impl<T, U> Div<U> for Vector3d<T>
 }
 ```
 
-The first of our custom operations. We create a trait with an associated type.
+The dot product is the first of our custom operations. We create a trait with an associated type.
 
 ```rust
 pub trait Dot<Rhs = Self> {
@@ -165,9 +166,8 @@ pub trait Dot<Rhs = Self> {
 }
 ```
 
-And then we implement it. Again, we are assuming that our vectors are over some type that does
-not change over addition; if we weren't making that assumption, this would get a good deal
-messier.
+And then we implement it. Again, we are assuming that our vectors are over some type that does not
+change with addition. If we weren't making that assumption, this would get a good deal messier.
 
 ```rust
 impl<T, U> Dot<Vector3d<U>> for Vector3d<T>
@@ -181,7 +181,7 @@ impl<T, U> Dot<Vector3d<U>> for Vector3d<T>
 }
 ```
 
-The cross product follows the same pattern.
+The cross product follows a similar pattern.
 
 ```rust
 pub trait Cross<Rhs = Self> {
@@ -201,18 +201,16 @@ impl<T, U> Cross<Vector3d<U>> for Vector3d<T>
                       self.x * rhs.y - self.y * rhs.x)
     }
 }
+```
 
+For the norm-squared, we can just call out to `Dot` that we've already defined.
 
-
+```rust
 pub trait Norm2 {
     type Output;
     fn norm2(self) -> Self::Output;
 }
-```
 
-To implement norm-squared, we can just call out to `Dot` that we've already defined.
-
-```rust
 impl<T> Norm2 for Vector3d<T>
     where Vector3d<T>: Copy + Dot
 {
@@ -221,26 +219,28 @@ impl<T> Norm2 for Vector3d<T>
         self.dot(self)
     }
 }
-
-
-
-pub trait Norm {
-    type Output;
-    fn norm(self) -> Self::Output;
-}
 ```
 
-Implementing `Norm` is a bit trickier. For this, we need to take a square root. We have a
-couple options.
+Implementing `Norm` is a bit trickier. For this, we need to take a square root. We have a couple
+options.
 
-1. We could just implement it for primitives and leave it to users to make a norm for anything else they want.
-2. We could use the `Float` trait from the *num* crate. This is more flexible, but still leaves out *dimensioned*.
-3. We could use the `Sqrt` trait from *dimensioned*. This gives us support for *dimensioned*
-   and primitives, but requires our vector library be aware of *dimensioned*.
+1. We could just implement it for primitives and leave it to users to make a norm for anything else
+   they want.
+
+2. We could use the `Float` trait from the num crate. This is more flexible, but still leaves out
+   dimensioned.
+
+3. We could use the `Sqrt` trait from dimensioned. This gives us support for dimensioned and
+   primitives, but requires our vector library be aware of dimensioned.
 
 We will go with option 3.
 
 ```rust
+pub trait Norm {
+    type Output;
+    fn norm(self) -> Self::Output;
+}
+
 use dim::Sqrt;
 impl<T> Norm for Vector3d<T>
     where Vector3d<T>: Norm2,
@@ -251,9 +251,11 @@ impl<T> Norm for Vector3d<T>
         self.norm2().sqrt()
     }
 }
+```
 
+Since we have a norm function and scalar division, we can produce a normalized version of a vector.
 
-
+```rust
 pub trait Normalized {
     type Output;
     fn normalized(self) -> Self::Output;
@@ -268,9 +270,11 @@ impl<T> Normalized for Vector3d<T>
         self / n
     }
 }
+```
 
+Finally, `Index` and `Display` can be implemented just as before.
 
-
+```rust
 use std::ops::Index;
 impl<T> Index<usize> for Vector3d<T> {
     type Output = T;

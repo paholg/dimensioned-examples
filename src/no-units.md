@@ -1,23 +1,23 @@
 # Hard sphere fluid Monte Carlo simulation with no units.
 
-Not used for the simulation itself, but we want to save to file at fixed intervals and to know
-for how long we've been running the simulation.
+We don't need to be aware of time for the simulation itself, but we want to save to file at fixed
+intervals and to know for how long we've been running the simulation.
 
 ```rust
 extern crate time;
 use time::precise_time_s;
 ```
 
-This is a very simple 3d vector over f64s.
+This is our very simple 3d vector over `f64`s.
 
 ```rust
 mod vector3d;
 use vector3d::Vector3d;
 ```
 
-All distances should be in terms of the sphere radius, `R`. We don't have units to enforce
-this, though, so if we ever change `R`, or decide to work in terms of diameter instead, we may
-get bugs where we've forgotten a factor of `R`.
+All distances should be in terms of the sphere radius, `R`. We don't have units to enforce this,
+though, so if we ever change `R`, or decide to work in terms of diameter instead, we may get bugs
+where we've forgotten a factor of `R`.
 
 ```rust
 const R: f64 = 1.0;
@@ -60,19 +60,18 @@ single sphere, making our terms differ by a factor of `n`.
     let iterations: usize = argv[3].parse().expect("Need integer for iterations");
 ```
 
-Whenever we attempt to move a sphere, it will be by a random distancee from a Gaussian
-distribution where `scale` is the width. Its value does not affect the
-correctness of our results, but if it's too small the spheres won't move very much, and if
-it's too large, then most moves will fail. In either case, it will take longer to converge
-on the correct results. Ideally, we would adjust this during the first part of
-the simulation.
+Whenever we attempt to move a sphere, it will be by a random distance from a Gaussian distribution
+where `scale` is the width. Its value does not affect the correctness of our results, but if it's
+too small the spheres won't move very much, and if it's too large, then most moves will fail. In
+either case, it will take longer to converge on the correct results. Ideally, we would adjust this
+during the first part of the simulation.
 
 ```rust
     let scale = 0.05;
 ```
 
-We will measure the density along the *z*-axis only. As all directions are the same, this
-was an arbitrary choice. This value is the width of our histogram bins, and determines the
+We will measure the density along the *z*-axis only. As all directions are the same, this was an
+arbitrary choice. This value gives the width of our histogram bins, and so determines the
 resolution of our data.
 
 ```rust
@@ -186,12 +185,12 @@ First, we attempt to move each sphere once.
             let mut overlaps = false;
 ```
 
-Note that we have to check sphere *i* against all spheres *j*, not just the
-ones with higher indices, because we're moving them as we go.
+Note that we have to check moved sphere *i* (*temp*) against all spheres *j*, not just the ones
+with higher indices, because we're moving them as we go.
 
 ```rust
             for j in 0..n {
-                if j != i && overlap(spheres[i], spheres[j], len) {
+                if j != i && overlap(temp, spheres[j], len) {
                     overlaps = true;
                     break;
                 }

@@ -19,7 +19,7 @@ if diff $frust-2 $frust-1 &> /dev/null; then
     echo -e "\nSame output as Rust v1"
 else
     echo -e "\nDIFFERENT! First 10 lines of output differences for Rust-2:"
-    diff $frust-2 $frust-1 | head -n10
+    diff -y $frust-2 $frust-1 | head -n10
 fi
 
 echo -e "\n==> Rust v3: Dimensioned with generic vectors and units inside <=="
@@ -29,7 +29,7 @@ if diff $frust-3 $frust-1 &> /dev/null; then
     echo -e "\nSame output as Rust v1"
 else
     echo -e "\nDIFFERENT! First 10 lines of output differences for Rust-3:"
-    diff $frust-3 $frust-1 | head -n10
+    diff -y $frust-3 $frust-1 | head -n10
 fi
 echo ""
 
@@ -41,7 +41,7 @@ for compiler in $compilers; do
         echo -e "\nSame output as Rust v1"
     else
         echo -e "\nDIFFERENT! First 10 lines of output differences for $compiler:"
-        diff $fcpp-$compiler $frust-1 | head -n10
+        diff -y $fcpp-$compiler $frust-1 | head -n10
     fi
     echo ""
   fi

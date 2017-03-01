@@ -18,10 +18,11 @@ iterations for which to run.
 Running with
 
 ```
-./run_all.sh 100 10 1000000
+./run_all.sh 100 10 100000
 ```
 
-gives a nice, quick timing comparison.
+gives a quick timing comparison. Note that the C++ version will have different output from
+the Rust versions due to floating point differences.
 
 ## About the simulation
 

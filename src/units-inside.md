@@ -115,7 +115,7 @@ Here too. We can forget we even have units most of the time.
             let mut overlaps = false;
 
             for j in 0..n {
-                if j != i && overlap(spheres[i], spheres[j], len) {
+                if j != i && overlap(temp, spheres[j], len) {
                     overlaps = true;
                     break;
                 }

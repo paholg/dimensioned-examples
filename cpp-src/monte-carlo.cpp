@@ -137,7 +137,7 @@ int main(int argc, const char *argv[]) {
       const vector3d temp = random_move(spheres[i], scale, len);
       bool overlaps = false;
       for(int j=0; j<N; j++) {
-        if (j != i && overlap(spheres[i], spheres[j], len)) {
+        if (j != i && overlap(temp, spheres[j], len)) {
           overlaps = true;
           break;
         }

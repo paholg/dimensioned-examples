@@ -223,7 +223,7 @@ It's so easy to see that these times are 1 s and 30 min respectively!
             let mut overlaps = false;
 
             for j in 0..n {
-                if j != i && overlap(spheres[i], spheres[j], len) {
+                if j != i && overlap(temp, spheres[j], len) {
                     overlaps = true;
                     break;
                 }
