@@ -16,6 +16,7 @@ other unit systems, then please check out the conversion example here:
 
 ## Hard Sphere Simulation
 
-This example covers using dimensioned with vectors in a couple different ways.
+This example covers using dimensioned with vectors in a couple different ways. It illustrates how
+one can use dimensioned with different libraries, and some of the limitations in doing so.
 
 [**Simulation Example**](hard-spheres.md)

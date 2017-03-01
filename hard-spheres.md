@@ -4,7 +4,7 @@ This repository contains four versions of the same simulation; a C++ version, a 
 no units, and two Rust versions with units that demonstrate different ways to use
 [*dimensioned*](https://github.com/paholg/dimensioned/).
 
-# Usage
+## Use
 
 To run all versions of the simulation, run
 
@@ -23,7 +23,7 @@ Running with
 
 gives a nice, quick timing comparison.
 
-# About the simulation
+## About the simulation
 
 A hard sphere fluid is a fluid made of spherical particles that have only one interaction; they
 can't be in the same place at the same time. Imagine a box in space with a bunch of billiard balls
@@ -53,18 +53,14 @@ versions are all getting the exact same results.
 I did research for my undergraduate degree in physics with more involved versions of this
 simulation, so it seemed a good place to start playing with Rust.
 
-# About this repository
+## The Simulation Versions
+
+### 0. C++
 
 The C++ version of this simulation is located in `cpp-src`. It is not the focus of this
 documentation and will not be mentioned again.
 
-The Rust code was written in literate Rust, with the help of
-[tango](https://github.com/pnkfelix/tango). As you read through this document, there will be a
-brief overview of each file, and then a link to it.
-
-# The Three Rust Versions
-
-## 1. No Units
+### 1. Rust with no units
 
 Let's start with the basic simulation. For simplicity, we use a very basic, non-generic 3d vector
 library, which you can [check out here](src/vector3d.md).
@@ -79,7 +75,7 @@ units, feel free to skim over this or skip it entirely.
 
 [Check out the code here](src/no-units.md).
 
-## 2. Units Outside
+### 2. Rust with units outside
 
 In this first version with units, we use the same non-generic vector library. So, we are forced to
 wrap the vectors in units. This allows the most flexibility in what other libraries can be used
@@ -87,7 +83,7 @@ with *dimensioned*, but isn't quite as convenient to work with as the next versi
 
 [Check out the code here](src/units-outside.md).
 
-## 3. Units Inside
+### 3. Rust with units inside
 
 In this final version, we treat primitives with units are just primitives, resulting in code that
 is very similar to the version with no units. It is the ideal way to use *dimensioned*.
