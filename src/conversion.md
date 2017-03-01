@@ -120,19 +120,17 @@ Note that `1.2 * si::M` and `si::Meter::new(1.2)` are equivalent.
 
     assert_eq!(x1, x2.into());
     assert_eq!(x2, x1.into());
-```
 
-prints: x1 = 2.91 m, x2 = 9.56 ft
-
-```rust
     println!("x1 = {:.2}, x2 = {:.2}", x1, x2);
-
-    let x3 = x1 + x2.into();
 ```
-
-prints: x3 = 5.8288 m
+prints: `x1 = 2.91 m, x2 = 9.56 ft`
 
 ```rust
+    let x3 = x1 + x2.into();
+
     println!("x3 = {}", x3);
+```
+prints: `x3 = 5.8288 m`
+```rust
 }
 ```

@@ -201,11 +201,9 @@ impl<T, U> Cross<Vector3d<U>> for Vector3d<T>
                       self.x * rhs.y - self.y * rhs.x)
     }
 }
-```
 
 
 
-```rust
 pub trait Norm2 {
     type Output;
     fn norm2(self) -> Self::Output;
@@ -223,11 +221,9 @@ impl<T> Norm2 for Vector3d<T>
         self.dot(self)
     }
 }
-```
 
 
 
-```rust
 pub trait Norm {
     type Output;
     fn norm(self) -> Self::Output;
@@ -255,11 +251,9 @@ impl<T> Norm for Vector3d<T>
         self.norm2().sqrt()
     }
 }
-```
 
 
 
-```rust
 pub trait Normalized {
     type Output;
     fn normalized(self) -> Self::Output;
@@ -274,11 +268,9 @@ impl<T> Normalized for Vector3d<T>
         self / n
     }
 }
-```
 
 
 
-```rust
 use std::ops::Index;
 impl<T> Index<usize> for Vector3d<T> {
     type Output = T;

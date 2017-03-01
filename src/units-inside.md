@@ -186,11 +186,9 @@ fn fix_periodic(mut v: Vector3d<Meter<f64>>, len: Meter<f64>) -> Vector3d<Meter<
     }
     v
 }
-```
 
 
 
-```rust
 fn periodic_diff(a: Vector3d<Meter<f64>>,
                  b: Vector3d<Meter<f64>>,
                  len: Meter<f64>)
