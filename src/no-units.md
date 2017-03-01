@@ -185,8 +185,9 @@ First, we attempt to move each sphere once.
             let mut overlaps = false;
 ```
 
-Note that we have to check moved sphere *i* (*temp*) against all spheres *j*, not just the ones
-with higher indices, because we're moving them as we go.
+Note that we have to check our moved sphere, `temp`, against all spheres `j`, not just the ones
+with higher indices, because we're moving them as we go. We also don't care if it overlaps with
+sphere `i` because it *is* sphere `i`.
 
 ```rust
             for j in 0..n {
@@ -206,9 +207,9 @@ We only want to keep the move if the sphere doesn't overlap with any others.
         }
 ```
 
-Now, we will update the density histogram with the new locations of the spheres. We
-could do this either more or less frequently, but doing it each time we move all the
-spheres seems reasonable enough.
+Now, we will update the density histogram with the new locations of the spheres. We could do this
+either more or less frequently, but doing it each time we move all the spheres seems reasonable
+enough.
 
 ```rust
         for sphere in &spheres {
@@ -320,8 +321,8 @@ We use the distance squared to avoid having to take an unnecessary square root.
 }
 ```
 
-Perform a random move using a Gaussian distribution of standard deviation of width
-`scale`. Then, move the result into the cell in case it's escaped.
+Perform a random move using a Gaussian distribution of standard deviation of width `scale`. Then,
+move the result into the cell in case it escaped.
 
 ```rust
 fn random_move(v: &Vector3d, scale: f64, len: f64) -> Vector3d {

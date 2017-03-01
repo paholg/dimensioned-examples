@@ -1,6 +1,6 @@
 # Hard sphere fluid Monte Carlo simulation with units on the outside.
 
-We will be using units from *dimensioned*.
+We will be using units from dimensioned this time.
 
 ```rust
 extern crate dimensioned as dim;
@@ -12,18 +12,18 @@ use vector3d::Vector3d;
 ```
 
 We only require a unit for length. While a hard sphere fluid with particles of meter length is
-silly, it doesn't really mater what unit we use; we want to work in terms of dimensionless
-quantities, and using any unit lets us enforce that.
+silly, it doesn't really matter what unit we use; we just need something to ensure everything is the
+same.
 
 ```rust
 use dim::si::{self, Meter, M};
 ```
 
 Once `const_fns` are stable, this can be replaced with a much nicer call to `Meter::new()`. In this
-case, we could just do `const R: Meter<f64> = M;` but this lets us choose a different value for
-```rust
-// `R` if we so wish.
+case, we could just do `const R: Meter<f64> = M;` but this method would let us choose a different
+value for `R` if we so wished.
 
+```rust
 const R: Meter<f64> = Meter {
     value_unsafe: 1.0,
     _marker: std::marker::PhantomData,
@@ -48,8 +48,8 @@ dimensional safety instead of memory safety. Once we've ensured that `norm2` is 
 correctly, we can rest easy knowing it will be safe to use.
 
 We could implement this a bit more simply if we only cared about it working for the `SI` unit
-system, but it's not that much more trouble to make it general, and now it will work with *any*
-unit system.
+system, but it's not that much more trouble to make it general, and now it will work with any unit
+system.
 
 The `norm2` funtion is a particulary nice case study for this pattern, because it's rather simple
 and yet involves changing both the value type and the units of our object.
@@ -67,7 +67,7 @@ happening. We are going from something `Dimensioned` with value-type `Vector3d` 
 unit-type `U` to value-type `f64` and unit-type `U*2`. Note that unit-types are in terms of
 powers, so squaring a value means multiplying its units by two.
 ```rust
-          D: Dimensioned<Value = Vector3d, Units = U> + MapUnsafe<f64, Prod<U, P2>>
+          D: Dimensioned<Value=Vector3d, Units=U> + MapUnsafe<f64, Prod<U, P2>>
 {
     type Output = <D as MapUnsafe<f64, Prod<U, P2>>>::Output;
     fn norm2(self) -> Self::Output {
@@ -79,7 +79,7 @@ powers, so squaring a value means multiplying its units by two.
 Other vector operations could be similarly implemented, but they are not needed here, and so their
 implementation is left as an exercise for the reader.
 
-Note, though, that we get any arithmetic operations for free, as they are defined in *dimensioned*.
+Note, though, that we get any arithmetic operations for free, as they are defined in dimensioned.
 
 
 Let's define our own wrapper around `precise_time_s` so that it has units.
@@ -88,8 +88,9 @@ Let's define our own wrapper around `precise_time_s` so that it has units.
 fn time() -> si::Second<f64> {
     time::precise_time_s() * si::S
 }
+```
 
-
+```rust
 fn main() {
 
     let argv: Vec<String> = std::env::args().collect();
@@ -128,7 +129,9 @@ asterisk.
 
 ```rust
     let density_bins = *(len / dz_density + 0.5) as usize;
+```
 
+```rust
     let mut density_histogram: Vec<usize> = vec![0; density_bins];
     let mut spheres: Vec<Meter<Vector3d>> = Vec::with_capacity(n);
 
@@ -145,7 +148,7 @@ Oops, we run into our first problem here. We need to make vectors from `cell_w`,
 has dimensions so we can't do it directly. We have to pull out the value, put that in the vector,
 and then wrap the whole vector in dimensions. This is essentially dimensioned's version of
 an unsafe block, and it could be avoided by using a generic vector with the dimensions on
-the inside (which is the next method we'll cover).
+the inside (the next example we'll cover).
 
 ```rust
     let offset = [Meter::new(Vector3d::new(0.0, cell_w.value_unsafe, cell_w.value_unsafe) / 2.0),
@@ -157,7 +160,7 @@ the inside (which is the next method we'll cover).
 I would have liked to wrap these vectors in dimensions by simply multiplying by `M`, as we
 have done for primitives.
 
-We could multiply with `M` on the right, but then we would have to implement `Mul<SI<f64, A>>
+We could multiply with `M` on the right, but then we would have to implement `Mul<SI<f64, U>>
 for Vector3d`. That's fine in this example, but if `Vector3d` were defined in a different crate, then
 we'd be out of luck.
 
@@ -189,6 +192,9 @@ At least we get the benefit of our dimensions for this addition.
 
 ```rust
                     spheres.push(Meter::new(Vector3d::new(x, y, z)) + off.clone());
+```
+
+```rust
 
                     b += 1;
                     if b >= n {
@@ -212,7 +218,9 @@ It's so easy to see that these times are 1 s and 30 min respectively!
 ```rust
     let mut output_period = 1.0 * si::S;
     let max_output_period = 30.0 * si::MIN;
+```
 
+```rust
     let start_time = time();
     let mut last_output = start_time;
 
@@ -240,13 +248,15 @@ It's so easy to see that these times are 1 s and 30 min respectively!
 We get to use that dereference trick again to go from `Unitless<f64>` to
 `f64` safely.
 
-Note that we can call `sphere[2]` because `Index` is implemented in
-*dimensioned*. We cannot, however, call `sphere.z`, as we did in the previous
-version. This, again, would not be an issue if we were using generic vectors and
-units on the inside.
+Note that we can call `sphere[2]` because `Index` is implemented in dimensioned. We cannot,
+however, call `sphere.z`, as we did in the previous version. This, again, would not be an issue if
+we were using generic vectors and units on the inside.
 
 ```rust
             let z_i = *(sphere[2] / dz_density) as usize;
+```
+
+```rust
             density_histogram[z_i] += 1;
         }
 
@@ -265,8 +275,9 @@ Note that, like `Deref`, `Map` is only defined for `Dimensionless`
 quantities and cannot change units. As such, it is dimensionally safe to use
 whenever you wish, unlike `MapUnsafe`.
 
-We could also use `Deref` here and end up with code more like the no units version,
-but I wanted to demonstrate `Map`.
+We could also use `Deref` here and end up with code more like the no units version, but I wanted to
+demonstrate `Map`. Also note that this way, these variables have type `Unitless<usize>` which may
+or may not be advantageous over just `usize`.
 
 ```rust
             use dim::Map;
@@ -281,15 +292,19 @@ but I wanted to demonstrate `Map`.
                      minutes,
                      seconds,
                      iteration);
+```
 
+```rust
             let mut densityout = std::fs::File::create(&density_path).expect("Couldn't make file!");
 ```
 
-Handy `Deref` yet again.
+Let's use that handy `Deref` yet again.
 
 ```rust
             let zbins: usize = *(len / dz_density) as usize;
+```
 
+```rust
             for z_i in 0..zbins {
                 let z = (z_i as f64 + 0.5) * dz_density;
                 let zhist = density_histogram[z_i];
@@ -305,7 +320,7 @@ Handy `Deref` yet again.
 }
 ```
 
-Other than the signaturess, these functions are almost identical to the ones that don't use units.
+Other than the signatures, these functions are almost identical to the ones that don't use units.
 
 ```rust
 fn fix_periodic(mut v: Meter<Vector3d>, len: Meter<f64>) -> Meter<Vector3d> {

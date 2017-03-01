@@ -71,16 +71,16 @@ wanted identical results for the Rust and C++ code, so they both use the same, b
 generator.
 
 Consider this the reference version; it explains what's happening in the simulation, whereas the
-other versions will only explain differences. If you don't care about the simulation and are only here to look at
-units, feel free to skim over this or skip it entirely.
+other versions will only their explain differences. If you don't care about the simulation and are
+only here to look at units, feel free to skim over this or skip it entirely.
 
 [Check out the code here](src/no-units.md).
 
 ### 2. Rust with units outside
 
 In this first version with units, we use the same non-generic vector library. So, we are forced to
-wrap the vectors in units. This allows the most flexibility in what other libraries can be used
-with *dimensioned*, but isn't quite as convenient to work with as the next version.
+wrap the vectors in units. This method allows the most flexibility in what other libraries can be
+used with dimensioned, but isn't quite as convenient to work with as the next version.
 
 [Check out the code here](src/units-outside.md).
 
