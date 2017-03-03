@@ -1,8 +1,8 @@
 # Monte Carlo Simulation of a Homogeneous Hard Sphere Fluid
 
-This repository contains four versions of the same simulation; a C++ version, a Rust version with
-no units, and two Rust versions with units that demonstrate different ways to use
-[*dimensioned*](https://github.com/paholg/dimensioned/).
+This example contains four versions of the same simulation; a C++ version, a Rust version with no
+units, and two Rust versions with units that demonstrate different ways to use
+[dimensioned](https://github.com/paholg/dimensioned/).
 
 ## Use
 
@@ -87,7 +87,7 @@ used with dimensioned, but isn't quite as convenient to work with as the next ve
 ### 3. Rust with units inside
 
 In this final version, we treat primitives with units are just primitives, resulting in code that
-is very similar to the version with no units. It is the ideal way to use *dimensioned*.
+is very similar to the version with no units. It is the ideal way to use dimensioned.
 
 Of course, there's a catch. We need a much more flexibile vector library, which you can view
 [here](src/vector3d_generic.md). Note that it is not enough for the vector library to be generic,

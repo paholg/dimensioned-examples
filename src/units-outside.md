@@ -41,11 +41,11 @@ trait Norm2 {
 }
 ```
 
-Now, we'll implement it using the handy `MapUnsafe` trait from *dimensioned*. It is so named
-because it gives us unlimited power over our value and its units, thereby disregarding all the
-dimensional safety that this library provides. It's a lot like the `unsafe` keyword, only for
-dimensional safety instead of memory safety. Once we've ensured that `norm2` is implemented
-correctly, we can rest easy knowing it will be safe to use.
+Now, we'll implement it using the handy `MapUnsafe` trait from dimensioned. It is so named because
+it gives us unlimited power over our value and its units, thereby disregarding all the dimensional
+safety that this library provides. It's a lot like the `unsafe` keyword, only for dimensional
+safety instead of memory safety. Once we've ensured that `norm2` is implemented correctly, we can
+rest easy knowing it will be safe to use.
 
 We could implement this a bit more simply if we only cared about it working for the `SI` unit
 system, but it's not that much more trouble to make it general, and now it will work with any unit
