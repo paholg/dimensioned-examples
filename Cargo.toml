@@ -16,12 +16,16 @@ build = "build.rs"
 
 [[bin]]
   name = "no-units"
+  path = "./src/no-units.rs"
 
 [[bin]]
   name = "units-outside"
+  path = "./src/units-outside.rs"
 
 [[bin]]
   name = "units-inside"
+  path = "./src/units-inside.rs"
 
 [[bin]]
   name = "conversion"
+  path = "./src/conversion.rs"
