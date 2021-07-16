@@ -112,24 +112,18 @@ we need to raise each conversion factor to that power.
 }
 ```
 
-We would also like to convert from our `FM` system to `SI`. Unfortunately, since `SI` was not
-defined in this crate, we cannot implement `From`. That leaves us with three options:
+We would also like to convert from our `FM` system to `SI`.
 
-1. Submit an issue on GitHub for dimensioned to add our unit system. Please feel free to do
-   this if you think the unit system would be useful for others.
-2. Create our own `From`-like trait and implement it.
-3. Implement `Into` instead. The `std` documentation recommends against this, but I
-   don't see a problem with it here.
-
-Of course, you could choose options 2 and 3. In this example, we will go with 3 only:
+NOTE: When using rust versions <1.41 `From` cannot be implemented for types from other crates.
+Checkout commit c92d6a82ab34a1d04d77a19058713455af90b586 for an alternative.
 
 ```rust
-impl<V, Length, Time> Into<
-        si::SI<Prod<V, f64>, tarr![Length, Z0, Time, Z0, Z0, Z0, Z0]>>
-    for fm::FM<V, tarr![Length, Time]>
+impl<V, Length, Time> From<
+        fm::FM<V, tarr![Length, Time]>>
+    for si::SI<Prod<V, f64>, tarr![Length, Z0, Time, Z0, Z0, Z0, Z0]>
     where V: Mul<f64>, Length: Integer, Time: Integer,
 {
-    fn into(self) -> si::SI<Prod<V, f64>, tarr![Length, Z0, Time, Z0, Z0, Z0, Z0]> {
+    fn from(other: fm::FM<V, tarr![Length, Time]>) -> Self {
 ```
 
 Because we are converting the other way now, we will use `SI`'s constants for `FM`'s
@@ -140,7 +134,7 @@ base units as conversion factors.
         let time_fac = si::MIN.value_unsafe.powi(Time::to_i32());
         let fac = length_fac * time_fac;
 
-        si::SI::new( self.value_unsafe * fac )
+        si::SI::new( other.value_unsafe * fac )
     }
 }
 ```
